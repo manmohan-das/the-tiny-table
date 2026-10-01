@@ -10,7 +10,7 @@ public class DBConnection {
             "jdbc:mysql://localhost:3306/the_tiny_table";
 
     private static final String USERNAME = "root";
-    private static final String PASSWORD = "";
+    private static final String PASSWORD = "@1097";
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USERNAME, PASSWORD);
