@@ -1,5 +1,7 @@
 package model;
 
+import java.math.BigDecimal;
+
 public class User {
 
     private int userId;
@@ -8,6 +10,7 @@ public class User {
     private String password;
     private String role;
     private int status;
+    private BigDecimal salary;
 
     public User() {
     }
@@ -21,6 +24,18 @@ public class User {
         this.password = password;
         this.role = role;
         this.status = status;
+    }
+
+    public User(int userId, String name, String username,
+            String password, String role, int status, BigDecimal salary) {
+
+        this.userId = userId;
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.status = status;
+        this.salary = salary;
     }
 
     public int getUserId() {
@@ -69,5 +84,13 @@ public class User {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public BigDecimal getSalary() {
+        return salary;
+    }
+
+    public void setSalary(BigDecimal salary) {
+        this.salary = salary;
     }
 }
