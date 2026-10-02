@@ -263,25 +263,38 @@ public class UserDAO {
     }
 
     /* ================================================================== */
-    /* 8. UPDATE USER  (name / role / status)                              */
-    /*    username aur password yahan se nahi badalte - uske liye          */
-    /*    updatePassword() use karo.                                       */
+    /* 8. UPDATE USER                                                      */
+    /*    name / username / role / salary / status update hote hain.       */
+    /*    Password alag updatePassword() se update hota hai.               */
     /* ================================================================== */
     public boolean updateUser(User user) {
 
-        String sql = "UPDATE users SET name = ?,username= ?, role = ?, salary = ?, status = ? WHERE user_id = ?";
+        String checkSql = "SELECT 1 FROM users WHERE username = ? AND user_id <> ?";
+        String sql = "UPDATE users SET name = ?, username = ?, role = ?, salary = ?, status = ? WHERE user_id = ?";
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement checkPs = con.prepareStatement(checkSql)) {
 
-            ps.setString(1, user.getName());
-            ps.setString(2, user.getUsername());
-            ps.setString(3, user.getRole());
-            ps.setBigDecimal(4, user.getSalary());
-            ps.setInt(5, user.getStatus());
-            ps.setInt(6, user.getUserId());
+            checkPs.setString(1, user.getUsername());
+            checkPs.setInt(2, user.getUserId());
 
-            return ps.executeUpdate() > 0;
+            try (ResultSet rs = checkPs.executeQuery()) {
+                if (rs.next()) {
+                    System.err.println("UserDAO.updateUser(): username already exists -> " + user.getUsername());
+                    return false;
+                }
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, user.getName());
+                ps.setString(2, user.getUsername());
+                ps.setString(3, user.getRole());
+                ps.setBigDecimal(4, user.getSalary());
+                ps.setInt(5, user.getStatus());
+                ps.setInt(6, user.getUserId());
+
+                return ps.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updateUser() error, userId = " + user.getUserId());

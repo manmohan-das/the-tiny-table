@@ -167,4 +167,59 @@ public class PaymentDAO {
 
         return false;
     }
+
+
+    // 6. UPDATE PAYMENT
+    public boolean updatePayment(Payment payment) {
+
+        String sql = "UPDATE payments SET " +
+                     "order_id = ?, " +
+                     "amount = ?, " +
+                     "payment_method = ?, " +
+                     "payment_status = ?, " +
+                     "payment_date = ? " +
+                     "WHERE payment_id = ?";
+
+        try (
+            Connection con = DBConnection.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, payment.getOrderId());
+            ps.setBigDecimal(2, payment.getAmount());
+            ps.setString(3, payment.getPaymentMethod());
+            ps.setString(4, payment.getPaymentStatus());
+            ps.setTimestamp(5, payment.getPaymentDate());
+            ps.setInt(6, payment.getPaymentId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+
+    // 7. DELETE PAYMENT
+    public boolean deletePayment(int paymentId) {
+
+        String sql = "DELETE FROM payments WHERE payment_id = ?";
+
+        try (
+            Connection con = DBConnection.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)
+        ) {
+
+            ps.setInt(1, paymentId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }
