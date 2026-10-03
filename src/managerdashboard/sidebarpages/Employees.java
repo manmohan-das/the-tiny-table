@@ -17,9 +17,11 @@ import model.User;
 public class Employees extends JPanel {
 
     private final Color CREAM = new Color(247, 240, 223);
+    private final Color BROWN = new Color(110, 85, 60);
+
     private final Color WHITE = new Color(255, 252, 246);
+    private final Color BUTTON_GREEN = new Color(105, 130, 90);
     private final Color DARK_BROWN = new Color(76, 58, 42);
-    private final Color COFFEE = new Color(124, 91, 54);
     private final Color BUTTON_BROWN = new Color(139, 96, 55);
     private final Color BUTTON_HOVER = new Color(164, 119, 70);
     private final Color DELETE_COLOR = new Color(177, 91, 73);
@@ -27,7 +29,6 @@ public class Employees extends JPanel {
     private final Color TEXT = new Color(55, 46, 38);
     private final Color MUTED = new Color(112, 101, 88);
     private final Color BORDER = new Color(205, 187, 153);
-    private final Color TABLE_HEADER = new Color(232, 217, 185);
     private final Color TABLE_ALT = new Color(250, 245, 235);
     private final Color TABLE_SELECTED = new Color(235, 220, 190);
 
@@ -62,7 +63,7 @@ public class Employees extends JPanel {
         header.setBorder(BorderFactory.createEmptyBorder(20, 30, 15, 30));
 
         JLabel title = new JLabel("Employees");
-        title.setFont(new Font("Serif", Font.BOLD, 32));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 32));
         title.setForeground(DARK_BROWN);
 
         JLabel subtitle = new JLabel("Manage your restaurant team and staff access");
@@ -106,9 +107,17 @@ public class Employees extends JPanel {
         add(pageTop, BorderLayout.NORTH);
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { filterUsers(); }
-            public void removeUpdate(DocumentEvent e) { filterUsers(); }
-            public void changedUpdate(DocumentEvent e) { filterUsers(); }
+            public void insertUpdate(DocumentEvent e) {
+                filterUsers();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                filterUsers();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                filterUsers();
+            }
         });
     }
 
@@ -146,18 +155,23 @@ public class Employees extends JPanel {
         card.add(count);
         card.add(detail);
 
-        if (cardIndex == 0) totalCount = count;
-        else if (cardIndex == 1) presentCount = count;
-        else absentCount = count;
+        if (cardIndex == 0)
+            totalCount = count;
+        else if (cardIndex == 1)
+            presentCount = count;
+        else
+            absentCount = count;
 
         final String selectedStatus = cardIndex == 1 ? "Present" : cardIndex == 2 ? "Absent" : null;
         MouseAdapter interaction = new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
                 card.setBackground(new Color(248, 241, 226));
             }
+
             public void mouseExited(MouseEvent e) {
                 card.setBackground(WHITE);
             }
+
             public void mouseClicked(MouseEvent e) {
                 statusFilter = selectedStatus;
                 filterUsers();
@@ -174,13 +188,14 @@ public class Employees extends JPanel {
         int count = 0;
         for (User user : users) {
             String current = user.getStatus() == 1 ? "Present" : "Absent";
-            if (status.equalsIgnoreCase(current)) count++;
+            if (status.equalsIgnoreCase(current))
+                count++;
         }
         return count;
     }
 
     private void createTable() {
-        String[] columns = {"User ID", "Name", "Username", "Password", "Role", "Salary", "Status"};
+        String[] columns = { "User ID", "Name", "Username", "Password", "Role", "Salary", "Status" };
 
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -211,9 +226,12 @@ public class Employees extends JPanel {
                 super.getTableCellRendererComponent(table, value, selected, focused, row, column);
                 setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-                if (selected) setBackground(TABLE_SELECTED);
-                else if (row % 2 == 0) setBackground(WHITE);
-                else setBackground(TABLE_ALT);
+                if (selected)
+                    setBackground(TABLE_SELECTED);
+                else if (row % 2 == 0)
+                    setBackground(WHITE);
+                else
+                    setBackground(TABLE_ALT);
 
                 setForeground(TEXT);
                 setFont(table.getFont());
@@ -242,8 +260,8 @@ public class Employees extends JPanel {
 
         JTableHeader header = userTable.getTableHeader();
         header.setFont(new Font("Arial", Font.BOLD, 14));
-        header.setBackground(TABLE_HEADER);
-        header.setForeground(TEXT);
+        header.setBackground(BROWN);
+        header.setForeground(WHITE);
         header.setPreferredSize(new Dimension(100, 46));
         header.setReorderingAllowed(false);
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 1, BORDER));
@@ -266,9 +284,12 @@ public class Employees extends JPanel {
     }
 
     private void refreshTable() {
-        if (totalCount != null) totalCount.setText(String.valueOf(users.size()));
-        if (presentCount != null) presentCount.setText(String.valueOf(countByStatus("Present")));
-        if (absentCount != null) absentCount.setText(String.valueOf(countByStatus("Absent")));
+        if (totalCount != null)
+            totalCount.setText(String.valueOf(users.size()));
+        if (presentCount != null)
+            presentCount.setText(String.valueOf(countByStatus("Present")));
+        if (absentCount != null)
+            absentCount.setText(String.valueOf(countByStatus("Absent")));
         filterUsers();
     }
 
@@ -285,14 +306,14 @@ public class Employees extends JPanel {
             if (data.toLowerCase().contains(search)
                     && (statusFilter == null || statusFilter.equalsIgnoreCase(status))) {
 
-                tableModel.addRow(new Object[]{
-                    user.getUserId(),
-                    user.getName(),
-                    user.getUsername(),
-                    "********",
-                    user.getRole(),
-                    user.getSalary() == null ? BigDecimal.ZERO : user.getSalary(),
-                    status
+                tableModel.addRow(new Object[] {
+                        user.getUserId(),
+                        user.getName(),
+                        user.getUsername(),
+                        "********",
+                        user.getRole(),
+                        user.getSalary() == null ? BigDecimal.ZERO : user.getSalary(),
+                        status
                 });
             }
         }
@@ -305,7 +326,7 @@ public class Employees extends JPanel {
                 BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER),
                 BorderFactory.createEmptyBorder(5, 30, 12, 30)));
 
-        JButton addButton = createButton("➕ Add User", BUTTON_BROWN, new Color(187, 145, 98));
+        JButton addButton = createButton("➕ Add User", BUTTON_GREEN, new Color(105, 130, 90));
         JButton updateButton = createButton("✎ Update", UPDATE_COLOR, new Color(195, 151, 83));
         JButton deleteButton = createButton("🗑 Delete", DELETE_COLOR, new Color(198, 112, 94));
 
@@ -329,8 +350,13 @@ public class Employees extends JPanel {
         button.setBorderPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) { button.setBackground(hoverColor); }
-            public void mouseExited(MouseEvent e) { button.setBackground(normalColor); }
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(hoverColor);
+            }
+
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(normalColor);
+            }
         });
         return button;
     }
@@ -400,7 +426,8 @@ public class Employees extends JPanel {
 
     private User findUserById(int userId) {
         for (User user : users) {
-            if (user.getUserId() == userId) return user;
+            if (user.getUserId() == userId)
+                return user;
         }
         return null;
     }
@@ -469,13 +496,14 @@ public class Employees extends JPanel {
             styleTextField(passwordField);
             addComponent(formPanel, gbc, "Password:", passwordField, row++);
 
-            roleBox = new JComboBox<>(new String[]{"manager", "waiter", "cashier", "chef", "employee", "kitchen_staff"});
+            roleBox = new JComboBox<>(
+                    new String[] { "manager", "waiter", "cashier", "chef", "employee", "kitchen_staff" });
             styleComboBox(roleBox);
             addComponent(formPanel, gbc, "Role:", roleBox, row++);
 
             salaryField = addField(formPanel, gbc, "Salary:", row++);
 
-            statusBox = new JComboBox<>(new String[]{"Present", "Absent"});
+            statusBox = new JComboBox<>(new String[] { "Present", "Absent" });
             styleComboBox(statusBox);
             addComponent(formPanel, gbc, "Status:", statusBox, row++);
 
@@ -489,8 +517,6 @@ public class Employees extends JPanel {
             formPanel.add(passwordNote, gbc);
 
             if (editMode) {
-                // usernameField.setEditable(false);
-                // usernameField.setBackground(new Color(242, 237, 226));
                 nameField.setText(existingUser.getName());
                 usernameField.setText(existingUser.getUsername());
                 roleBox.setSelectedItem(existingUser.getRole());
@@ -592,8 +618,16 @@ public class Employees extends JPanel {
             }
         }
 
-        public User getUser() { return user; }
-        public boolean isSaved() { return saved; }
-        public String getNewPassword() { return new String(passwordField.getPassword()); }
+        public User getUser() {
+            return user;
+        }
+
+        public boolean isSaved() {
+            return saved;
+        }
+
+        public String getNewPassword() {
+            return new String(passwordField.getPassword());
+        }
     }
 }
