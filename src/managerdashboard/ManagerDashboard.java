@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import managerdashboard.sidebarpages.Employees;
 import managerdashboard.sidebarpages.Orders;
+import managerdashboard.sidebarpages.Payments;
 import managerdashboard.sidebarpages.Sales;
 import model.Order;
 
@@ -43,6 +44,7 @@ public class ManagerDashboard extends JFrame {
 
         private Employees employeesPage;
         private managerdashboard.sidebarpages.Menu menuPage;
+        private Payments paymentsPage;
         private OrderDAO orderDAO = new OrderDAO();
 
         // =====================================================
@@ -69,6 +71,7 @@ public class ManagerDashboard extends JFrame {
 
                 employeesPage = new Employees();
                 menuPage = new managerdashboard.sidebarpages.Menu();
+                paymentsPage = new Payments();
 
                 // =================================================
                 // MAIN PANEL
@@ -220,7 +223,6 @@ public class ManagerDashboard extends JFrame {
                 JButton salesBtn = createMenuButton(
                                 "📈  Sales");
 
-
                 JButton paymentsBtn = createMenuButton(
                                 "💳  Payments");
 
@@ -228,9 +230,8 @@ public class ManagerDashboard extends JFrame {
                 topPanel.add(menuBtn);
                 topPanel.add(employeesBtn);
                 topPanel.add(ordersBtn);
-             
+                topPanel.add(salesBtn);
                 topPanel.add(paymentsBtn);
-
                 setActiveMenuButton(dashboardBtn);
 
                 // =================================================
@@ -296,11 +297,9 @@ public class ManagerDashboard extends JFrame {
                         showSalesPage();
                 });
 
-              
-
                 paymentsBtn.addActionListener(e -> {
                         setActiveMenuButton(paymentsBtn);
-                        showSimplePage("Payments");
+                        showPaymentsPage();
                 });
 
                 // =================================================
@@ -579,7 +578,7 @@ public class ManagerDashboard extends JFrame {
 
                 int totalOrders = orderDAO.getTodayOrderCount();
                 BigDecimal todaySales = orderDAO.getTodaySales();
-                // BigDecimal monthlyRevenue = orderDAO.getMonthlyRevenue();
+                BigDecimal monthlyRevenue = orderDAO.getMonthlyRevenue();
 
                 JPanel card1 = createDashboardCard(
                                 "TOTAL ORDERS",
@@ -601,6 +600,11 @@ public class ManagerDashboard extends JFrame {
                                 "From orders table",
                                 "📈");
 
+                JPanel card4 = createDashboardCard(
+                                "REVENUE",
+                                "₹" + monthlyRevenue.toPlainString(),
+                                "This month",
+                                "💰");
 
                 // =================================================
                 // EMPLOYEE CARD CLICK
@@ -640,7 +644,7 @@ public class ManagerDashboard extends JFrame {
                 cardsPanel.add(card1);
                 cardsPanel.add(card2);
                 cardsPanel.add(card3);
-                // cardsPanel.add(card4);
+                cardsPanel.add(card4);
 
                 centerPanel.add(
                                 cardsPanel,
@@ -1068,38 +1072,75 @@ public class ManagerDashboard extends JFrame {
                                                                 10));
 
                                 for (int i = 0; i < days.length; i++) {
-                                int x = left +i*(right - left)/ 6;
-                                       g2.drawString(days[i],x - 9,bottom + 18);
+
+                                        int x = left +
+                                                        i *
+                                                                        (right - left)
+                                                                        / 6;
+
+                                        g2.drawString(
+                                                        days[i],
+                                                        x - 9,
+                                                        bottom + 18);
                                 }
                         }
                 };
-                graphPanel.setBackground(LIGHT_CREAM);
-                salesPanel.add(graphPanel,BorderLayout.CENTER);
+
+                graphPanel.setBackground(
+                                LIGHT_CREAM);
+
+                salesPanel.add(
+                                graphPanel,
+                                BorderLayout.CENTER);
 
                 // =================================================
                 // ADD BOTTOM PANELS
                 // =================================================
 
-                bottomPanel.add(ordersPanel);
-                bottomPanel.add(salesPanel);
-                centerPanel.add(bottomPanel,BorderLayout.CENTER);
-                main.add(centerPanel,BorderLayout.CENTER);
+                bottomPanel.add(
+                                ordersPanel);
+
+                bottomPanel.add(
+                                salesPanel);
+
+                centerPanel.add(
+                                bottomPanel,
+                                BorderLayout.CENTER);
+
+                main.add(
+                                centerPanel,
+                                BorderLayout.CENTER);
 
                 // =================================================
                 // FOOTER
                 // =================================================
 
-                JLabel footer = new JLabel("Good Food • Good Mood 🍃",SwingConstants.CENTER);
-                footer.setFont(new Font( "Serif",Font.ITALIC, 11));
+                JLabel footer = new JLabel(
+                                "Good Food • Good Mood 🍃",
+                                SwingConstants.CENTER);
+
+                footer.setFont(
+                                new Font(
+                                                "Serif",
+                                                Font.ITALIC,
+                                                11));
+
                 footer.setForeground(MUTED);
-                main.add(footer, BorderLayout.SOUTH);
+
+                main.add(
+                                footer,
+                                BorderLayout.SOUTH);
 
                 // =================================================
                 // SHOW DASHBOARD
                 // =================================================
 
-                contentPanel.add(main,BorderLayout.CENTER);
+                contentPanel.add(
+                                main,
+                                BorderLayout.CENTER);
+
                 contentPanel.revalidate();
+
                 contentPanel.repaint();
         }
 
@@ -1112,45 +1153,100 @@ public class ManagerDashboard extends JFrame {
                         String value,
                         String smallText,
                         String icon) {
-                JPanel card = new JPanel(new BorderLayout());
-                card.setBackground( LIGHT_CREAM);
-                card.setBorder( BorderFactory.createCompoundBorder( 
-                                BorderFactory.createLineBorder( BORDER),
-                                BorderFactory.createEmptyBorder( 12, 15, 12,15)));
+
+                JPanel card = new JPanel(
+                                new BorderLayout());
+
+                card.setBackground(
+                                LIGHT_CREAM);
+
+                card.setBorder(
+                                BorderFactory.createCompoundBorder(
+
+                                                BorderFactory.createLineBorder(
+                                                                BORDER),
+
+                                                BorderFactory.createEmptyBorder(
+                                                                12,
+                                                                15,
+                                                                12,
+                                                                15)));
 
                 // =================================================
                 // TOP
                 // =================================================
 
-                JPanel top = new JPanel(new BorderLayout());
+                JPanel top = new JPanel(
+                                new BorderLayout());
+
                 top.setOpaque(false);
+
                 JLabel titleLabel = new JLabel(title);
-                titleLabel.setFont(new Font( "Arial", Font.BOLD,11));
+
+                titleLabel.setFont(
+                                new Font(
+                                                "Arial",
+                                                Font.BOLD,
+                                                11));
+
                 titleLabel.setForeground(TEXT);
 
                 JLabel iconLabel = new JLabel(icon);
-                iconLabel.setFont(new Font( "Segoe UI Emoji",Font.PLAIN,21));
-                top.add(titleLabel,BorderLayout.WEST);
-                top.add(iconLabel,BorderLayout.EAST);
-                card.add(top,BorderLayout.NORTH);
+
+                iconLabel.setFont(
+                                new Font(
+                                                "Segoe UI Emoji",
+                                                Font.PLAIN,
+                                                21));
+
+                top.add(
+                                titleLabel,
+                                BorderLayout.WEST);
+
+                top.add(
+                                iconLabel,
+                                BorderLayout.EAST);
+
+                card.add(
+                                top,
+                                BorderLayout.NORTH);
 
                 // =================================================
                 // VALUE
                 // =================================================
 
                 JLabel valueLabel = new JLabel(value);
-                valueLabel.setFont(new Font( "Arial",Font.BOLD, 27));
+
+                valueLabel.setFont(
+                                new Font(
+                                                "Arial",
+                                                Font.BOLD,
+                                                27));
+
                 valueLabel.setForeground(TEXT);
-                card.add(valueLabel,BorderLayout.CENTER);
+
+                card.add(
+                                valueLabel,
+                                BorderLayout.CENTER);
 
                 // =================================================
                 // SMALL TEXT
                 // =================================================
 
                 JLabel smallLabel = new JLabel(smallText);
-                smallLabel.setFont(new Font( "Arial",Font.PLAIN,10));
+
+                smallLabel.setFont(
+                                new Font(
+                                                "Arial",
+                                                Font.PLAIN,
+                                                10));
+
                 smallLabel.setForeground(MUTED);
-                card.add(smallLabel,BorderLayout.SOUTH);
+
+                card.add(
+                                smallLabel,
+                                BorderLayout.SOUTH);
+
                 return card;
         }
 
@@ -1159,10 +1255,27 @@ public class ManagerDashboard extends JFrame {
         // =====================================================
 
         private JPanel createSectionPanel() {
-                JPanel panel = new JPanel(new BorderLayout(0,8));
-                panel.setBackground(LIGHT_CREAM);
-                panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER),
-                BorderFactory.createEmptyBorder( 12,14, 12, 14)));
+
+                JPanel panel = new JPanel(
+                                new BorderLayout(
+                                                0,
+                                                8));
+
+                panel.setBackground(
+                                LIGHT_CREAM);
+
+                panel.setBorder(
+                                BorderFactory.createCompoundBorder(
+
+                                                BorderFactory.createLineBorder(
+                                                                BORDER),
+
+                                                BorderFactory.createEmptyBorder(
+                                                                12,
+                                                                14,
+                                                                12,
+                                                                14)));
+
                 return panel;
         }
 
@@ -1181,22 +1294,26 @@ public class ManagerDashboard extends JFrame {
                                 boolean hasFocus,
                                 int row,
                                 int column) {
-                         JLabel label = (JLabel) super.getTableCellRendererComponent(
+                        JLabel label = (JLabel) super.getTableCellRendererComponent(
                                         table,
                                         value,
                                         isSelected,
                                         hasFocus,
                                         row,
                                         column);
-                        label.setHorizontalAlignment(SwingConstants.CENTER);
+                        label.setHorizontalAlignment(
+                                        SwingConstants.CENTER);
                         if (isSelected) {
-                                label.setBackground( TABLE_SELECTED);
+                                label.setBackground(
+                                                TABLE_SELECTED);
                                 label.setForeground(TEXT);
                         } else {
+                                label.setBackground(
+                                                TABLE_CREAM);
 
-                                label.setBackground(TABLE_CREAM); 
-                               label.setForeground(TEXT);
+                                label.setForeground(TEXT);
                         }
+
                         return label;
                 }
         }
@@ -1206,9 +1323,15 @@ public class ManagerDashboard extends JFrame {
         // =====================================================
 
         public void showEmployeesPage() {
+
                 contentPanel.removeAll();
-                contentPanel.add(employeesPage, BorderLayout.CENTER);
+
+                contentPanel.add(
+                                employeesPage,
+                                BorderLayout.CENTER);
+
                 contentPanel.revalidate();
+
                 contentPanel.repaint();
         }
 
@@ -1217,9 +1340,15 @@ public class ManagerDashboard extends JFrame {
         // =====================================================
 
         public void showOrdersPage() {
+
                 contentPanel.removeAll();
+
                 Orders ordersPage = new Orders();
-                contentPanel.add(ordersPage, BorderLayout.CENTER);
+
+                contentPanel.add(
+                                ordersPage,
+                                BorderLayout.CENTER);
+
                 contentPanel.revalidate();
                 contentPanel.repaint();
         }
@@ -1229,58 +1358,72 @@ public class ManagerDashboard extends JFrame {
         // =====================================================
 
         public void showSalesPage() {
+
                 contentPanel.removeAll();
+
                 Sales salesPage = new Sales();
-                contentPanel.add(salesPage,BorderLayout.CENTER);
+
+                contentPanel.add(
+                                salesPage,
+                                BorderLayout.CENTER);
+
                 contentPanel.revalidate();
                 contentPanel.repaint();
         }
+
         // =====================================================
         // MENU PAGE
         // =====================================================
 
         public void showMenuPage() {
-                 contentPanel.removeAll();
-                 contentPanel.add(menuPage,BorderLayout.CENTER);
-                 contentPanel.revalidate();
-                 contentPanel.repaint();
+
+                contentPanel.removeAll();
+
+                contentPanel.add(
+                                menuPage,
+                                BorderLayout.CENTER);
+
+                contentPanel.revalidate();
+
+                contentPanel.repaint();
+        }
+
+        // =====================================================
+        // PAYMENTS PAGE
+        // =====================================================
+
+        public void showPaymentsPage() {
+
+                contentPanel.removeAll();
+
+                contentPanel.add(
+                                paymentsPage,
+                                BorderLayout.CENTER);
+
+                contentPanel.revalidate();
+                contentPanel.repaint();
         }
 
         // =====================================================
         // SIMPLE OTHER PAGES
         // =====================================================
 
-        private void showSimplePage(String pageName) {
-                contentPanel.removeAll();
+       
+        
 
-                JPanel panel = new JPanel(new BorderLayout());
-
-                panel.setBackground(CREAM);
-                panel.setBorder( BorderFactory.createEmptyBorder(30, 35, 30,35));
-
-                JLabel title = new JLabel(pageName);
-
-                title.setFont(new Font("Serif",Font.BOLD,30));
-                title.setForeground(TEXT);
-                panel.add(title,BorderLayout.NORTH);
-    
-                JLabel message = new JLabel(pageName +" page coming soon...");
-                message.setFont(new Font( "Arial",Font.PLAIN, 16));
-                message.setForeground(MUTED);
-
-                panel.add(message, BorderLayout.CENTER);
-                contentPanel.add(panel,BorderLayout.CENTER);
-                contentPanel.revalidate();
-                contentPanel.repaint();
-        }
-       // =====================================================
+        // =====================================================
         // MAIN METHOD
         // =====================================================
 
         public static void main(
                         String[] args) {
-                 SwingUtilities.invokeLater( () -> {
-                       ManagerDashboard dashboard = new ManagerDashboard();  dashboard.setVisible(true);
-                                 });
+
+                SwingUtilities.invokeLater(
+                                () -> {
+
+                                        ManagerDashboard dashboard = new ManagerDashboard();
+
+                                        dashboard.setVisible(true);
+                                });
         }
 }
