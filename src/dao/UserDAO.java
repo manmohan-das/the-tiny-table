@@ -1,13 +1,11 @@
 package dao;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import model.User;
 import util.DBConnection;
 import util.PasswordUtil;
@@ -80,7 +78,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.login() error, username = " + username);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return null;
@@ -108,7 +106,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getUserById() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return null;
@@ -136,7 +134,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getUserByUsername() error, username = " + username);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return null;
@@ -160,7 +158,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.usernameExists() error, username = " + username);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -187,7 +185,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getAllUsers() error");
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return users;
@@ -221,7 +219,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getUsers() error, page = " + page);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return users;
@@ -256,7 +254,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.addUser() error, username = " + user.getUsername());
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -298,7 +296,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updateUser() error, userId = " + user.getUserId());
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -321,7 +319,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updatePassword() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -344,7 +342,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updateStatus() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -375,7 +373,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.deleteUser() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
