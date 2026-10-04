@@ -1,4 +1,5 @@
 package chefPanel;
+
 import javax.swing.*;
 import javax.swing.border.*;
 
@@ -456,6 +457,38 @@ public class ChefPage extends JFrame {
                                 scroll,
                                 BorderLayout.CENTER);
 
+                // ====================================================
+                // LOGOUT BUTTON
+                // ====================================================
+
+                JButton logoutButton = new RoundedButton("Logout");
+
+                logoutButton.setFont(
+                                new Font(
+                                                "SansSerif",
+                                                Font.BOLD,
+                                                13));
+
+                logoutButton.setForeground(Color.WHITE);
+
+                logoutButton.setBackground(RED);
+
+                logoutButton.setFocusPainted(false);
+
+                logoutButton.setBorder(
+                                new EmptyBorder(
+                                                10,
+                                                10,
+                                                10,
+                                                10));
+
+                logoutButton.addActionListener(
+                                e -> logout());
+
+                panel.add(
+                                logoutButton,
+                                BorderLayout.SOUTH);
+
                 return panel;
         }
 
@@ -705,7 +738,7 @@ public class ChefPage extends JFrame {
 
                                         order.orderNo = orderNo;
 
-                                        order.customer_name= safeText(
+                                        order.customer_name = safeText(
                                                         result.getString(
                                                                         "customer_name"),
                                                         "Walk-in Guest");
@@ -1338,6 +1371,54 @@ public class ChefPage extends JFrame {
                 return card;
         }
 
+        
+        // ========================================================
+        // LOGOUT
+        // ========================================================
+
+        private void logout() {
+
+                int result = JOptionPane.showConfirmDialog(
+                                this,
+                                "Are you sure you want to logout?",
+                                "Logout",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+
+                if (result != JOptionPane.YES_OPTION) {
+                        return;
+                }
+
+                dispose();
+
+                SwingUtilities.invokeLater(() -> {
+                        try {
+                                Class<?> loginClass = Class.forName("Login");
+
+                                java.lang.reflect.Constructor<?> constructor = loginClass.getDeclaredConstructor();
+
+                                constructor.setAccessible(true);
+
+                                JFrame login = (JFrame) constructor.newInstance();
+
+                                login.setVisible(true);
+
+                        } catch (Exception ex) {
+
+                                ex.printStackTrace();
+
+                                JOptionPane.showMessageDialog(
+                                                null,
+                                                "Unable to open Login page.\n\n"
+                                                                + ex.getClass().getSimpleName()
+                                                                + ": "
+                                                                + ex.getMessage(),
+                                                "Logout Error",
+                                                JOptionPane.ERROR_MESSAGE);
+                        }
+                });
+        }
+
         // ========================================================
         // WAITING ORDERS
         // ========================================================
@@ -1867,5 +1948,4 @@ public class ChefPage extends JFrame {
                 }
         }
 
-       
 }

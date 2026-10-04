@@ -312,13 +312,42 @@ public class ManagerDashboard extends JFrame {
                                         this,
                                         "Are you sure you want to logout?",
                                         "Logout",
-                                        JOptionPane.YES_NO_OPTION);
+                                        JOptionPane.YES_NO_OPTION,
+                                        JOptionPane.QUESTION_MESSAGE);
 
                         if (result == JOptionPane.YES_OPTION) {
 
-                                JOptionPane.showMessageDialog(
-                                                this,
-                                                "You have been logged out.");
+                                dispose();
+
+                                SwingUtilities.invokeLater(() -> {
+
+                                        try {
+
+                                                Class<?> loginClass = Class.forName("Login");
+
+                                                java.lang.reflect.Constructor<?> constructor = loginClass
+                                                                .getDeclaredConstructor();
+
+                                                constructor.setAccessible(true);
+
+                                                JFrame login = (JFrame) constructor.newInstance();
+
+                                                login.setVisible(true);
+
+                                        } catch (Exception ex) {
+
+                                                ex.printStackTrace();
+
+                                                JOptionPane.showMessageDialog(
+                                                                null,
+                                                                "Unable to open Login page.\n\n"
+                                                                                + ex.getClass().getSimpleName()
+                                                                                + ": "
+                                                                                + ex.getMessage(),
+                                                                "Logout Error",
+                                                                JOptionPane.ERROR_MESSAGE);
+                                        }
+                                });
                         }
                 });
 
@@ -1403,7 +1432,5 @@ public class ManagerDashboard extends JFrame {
                 contentPanel.revalidate();
                 contentPanel.repaint();
         }
-
-        
 
 }
