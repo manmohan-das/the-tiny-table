@@ -1,5 +1,3 @@
-
-
 import  util.DBConnection;
 import  employeePanel.MenuAndOrderTable;
 import  chefPanel.ChefPage;
@@ -34,7 +32,7 @@ public class Login extends JFrame {
         LoginBox login;
 
         MainPage() {
-            bg = new ImageIcon("resources/logo_banner/3d.png").getImage();
+            bg = new ImageIcon("resources/loginBackground.png").getImage();
             setLayout(null);
 
             roleLogo = new JLabel();

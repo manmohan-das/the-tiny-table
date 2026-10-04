@@ -1867,22 +1867,5 @@ public class ChefPage extends JFrame {
                 }
         }
 
-        // ========================================================
-        // MAIN
-        // ========================================================
-
-        public static void main(
-                        String[] args) {
-
-                SwingUtilities.invokeLater(
-                                () -> {
-
-                                        ChefPage page = new ChefPage();
-
-                                        page.setExtendedState(
-                                                        JFrame.MAXIMIZED_BOTH);
-
-                                        page.setVisible(true);
-                                });
-        }
+       
 }

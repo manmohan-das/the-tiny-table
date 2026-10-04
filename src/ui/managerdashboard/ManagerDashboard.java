@@ -1404,26 +1404,6 @@ public class ManagerDashboard extends JFrame {
                 contentPanel.repaint();
         }
 
-        // =====================================================
-        // SIMPLE OTHER PAGES
-        // =====================================================
-
-       
         
 
-        // =====================================================
-        // MAIN METHOD
-        // =====================================================
-
-        public static void main(
-                        String[] args) {
-
-                SwingUtilities.invokeLater(
-                                () -> {
-
-                                        ManagerDashboard dashboard = new ManagerDashboard();
-
-                                        dashboard.setVisible(true);
-                                });
-        }
 }
