@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 
-
 public class PasswordUtil {
 
     public static String hash(String password) {
@@ -48,6 +47,8 @@ public class PasswordUtil {
 
         return hash(password).equals(hashedPassword);
     }
+
+    
 
     public static boolean isHashed(String password) {
         if (password == null) {
