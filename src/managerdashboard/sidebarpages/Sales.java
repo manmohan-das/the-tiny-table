@@ -61,7 +61,7 @@ public class Sales extends JPanel {
 
         JLabel title = new JLabel("Sales Management");
         title.setFont(new Font("Segoe UI", Font.BOLD, 30));
-        title.setForeground(TEXT);
+        title.setForeground(new Color(76, 58, 42));
 
         JLabel subtitle = new JLabel("View completed orders and restaurant sales");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 15));

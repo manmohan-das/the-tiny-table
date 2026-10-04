@@ -58,166 +58,71 @@ public class Menu extends JPanel {
         private JComboBox<String> categoryBox;
         private JComboBox<String> availabilityBox;
 
-        // =========================================================
         // SUMMARY
-        // =========================================================
 
         private JLabel totalItemsLabel;
         private JLabel availableLabel;
         private JLabel outOfStockLabel;
 
-        // =========================================================
+        
         // CATEGORY MAP
-        // =========================================================
 
         private final Map<String, Integer> categoryMap = new HashMap<>();
 
-        // =========================================================
+
         // IMAGE FOLDER
-        // =========================================================
 
         private final File imageFolder = new File("images");
 
-        // =========================================================
         // CONSTRUCTOR
-        // =========================================================
 
         public Menu() {
 
-                setLayout(new BorderLayout(15, 15));
+                setLayout(new BorderLayout());
                 setBackground(CREAM);
 
-                // Create images folder if it does not exist
                 if (!imageFolder.exists()) {
                         imageFolder.mkdirs();
                 }
 
-                // =====================================================
-                // TOP PANEL
-                // =====================================================
+                // HEADER
 
-                JPanel topPanel = new JPanel();
-                topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-                topPanel.setBackground(CREAM);
-
-                topPanel.setBorder(
+                JPanel headerPanel = new JPanel(new BorderLayout());
+                headerPanel.setBackground(CREAM);
+                headerPanel.setBorder(
                                 BorderFactory.createEmptyBorder(
-                                                20, 25, 5, 25));
+                                                22, 25, 12, 25));
+
+                JPanel titlePanel = new JPanel();
+                titlePanel.setLayout(new BoxLayout(
+                                titlePanel,
+                                BoxLayout.Y_AXIS));
+                titlePanel.setBackground(CREAM);
 
                 JLabel title = new JLabel("Menu Management");
-
-                title.setFont(
-                                new Font(
-                                                "Segoe UI",
-                                                Font.BOLD,
-                                                30));
-
-                title.setForeground(TEXT);
+                title.setFont(new Font(
+                                "Segoe UI",
+                                Font.BOLD,
+                                30));
+                title.setForeground( new Color(76, 58, 42));
 
                 JLabel subtitle = new JLabel(
-                                "Manage restaurant food items, prices, images and availability");
+                                "Manage food items, prices, stock and availability");
+                subtitle.setFont(new Font(
+                                "Segoe UI",
+                                Font.PLAIN,
+                                14));
+                subtitle.setForeground(new Color(100, 90, 80));
 
-                subtitle.setFont(
-                                new Font(
-                                                "Segoe UI",
-                                                Font.PLAIN,
-                                                15));
+                titlePanel.add(title);
+                titlePanel.add(Box.createVerticalStrut(5));
+                titlePanel.add(subtitle);
 
-                subtitle.setForeground(
-                                new Color(100, 90, 80));
+                headerPanel.add(
+                                titlePanel,
+                                BorderLayout.WEST);
 
-                topPanel.add(title);
-                topPanel.add(Box.createVerticalStrut(5));
-                topPanel.add(subtitle);
-
-                // =====================================================
-                // SUMMARY CARDS
-                // =====================================================
-
-                JPanel cardsPanel = new JPanel(
-                                new GridLayout(1, 3, 15, 0));
-
-                cardsPanel.setBackground(CREAM);
-
-                cardsPanel.setBorder(
-                                BorderFactory.createEmptyBorder(
-                                                15, 0, 5, 0));
-
-                totalItemsLabel = new JLabel("0");
-                availableLabel = new JLabel("0");
-                outOfStockLabel = new JLabel("0");
-
-                cardsPanel.add(
-                                createSummaryCard(
-                                                "Total Items",
-                                                totalItemsLabel));
-
-                cardsPanel.add(
-                                createSummaryCard(
-                                                "Available",
-                                                availableLabel));
-
-                cardsPanel.add(
-                                createSummaryCard(
-                                                "Out of Stock",
-                                                outOfStockLabel));
-
-                topPanel.add(cardsPanel);
-
-                // =====================================================
-                // FILTER PANEL
-                // =====================================================
-
-                JPanel filterPanel = new JPanel(
-                                new FlowLayout(
-                                                FlowLayout.LEFT,
-                                                10,
-                                                5));
-
-                filterPanel.setBackground(CREAM);
-
-                searchField = new JTextField(18);
-
-                searchField.setToolTipText(
-                                "Search by ID or food name");
-
-                categoryBox = new JComboBox<>();
-                availabilityBox = new JComboBox<>();
-
-                availabilityBox.addItem("All");
-                availabilityBox.addItem("Available");
-                availabilityBox.addItem("Out of Stock");
-
-                filterPanel.add(
-                                new JLabel("Search:"));
-
-                filterPanel.add(searchField);
-
-                filterPanel.add(
-                                new JLabel("Category:"));
-
-                filterPanel.add(categoryBox);
-
-                filterPanel.add(
-                                new JLabel("Availability:"));
-
-                filterPanel.add(availabilityBox);
-
-                JButton refreshButton = createButton(
-                                "Refresh",
-                                BROWN);
-
-                filterPanel.add(refreshButton);
-
-                topPanel.add(filterPanel);
-
-                add(
-                                topPanel,
-                                BorderLayout.NORTH);
-
-                // =====================================================
-                // TABLE
-                // =====================================================
+                // TABLE MODEL
 
                 tableModel = new DefaultTableModel(
                                 new Object[] {
@@ -240,45 +145,34 @@ public class Menu extends JPanel {
                 };
 
                 menuTable = new JTable(tableModel);
-
-                menuTable.setRowHeight(60);
-
-                menuTable.setFont(
-                                new Font(
-                                                "Segoe UI",
-                                                Font.PLAIN,
-                                                14));
-
+                menuTable.setRowHeight(58);
+                menuTable.setFont(new Font(
+                                "Segoe UI",
+                                Font.PLAIN,
+                                14));
                 menuTable.setSelectionMode(
                                 ListSelectionModel.SINGLE_SELECTION);
-
+                menuTable.setShowVerticalLines(true);
+                menuTable.setShowHorizontalLines(true);
                 menuTable.setGridColor(DARK_CREAM);
+                menuTable.setIntercellSpacing(
+                                new Dimension(1, 1));
+                menuTable.setSelectionBackground(
+                                new Color(232, 220, 201));
+                menuTable.setSelectionForeground(TEXT);
 
-                // =====================================================
-                // HEADER
-                // =====================================================
+                JTableHeader tableHeader = menuTable.getTableHeader();
 
-                JTableHeader header = menuTable.getTableHeader();
-
-                header.setFont(
-                                new Font(
-                                                "Segoe UI",
-                                                Font.BOLD,
-                                                14));
-
-                header.setBackground(BROWN);
-                header.setForeground(Color.WHITE);
-                header.setPreferredSize(
-                                new Dimension(
-                                                header.getWidth(),
-                                                40));
-
-                // =====================================================
-                // CENTER ALIGNMENT
-                // =====================================================
+                tableHeader.setFont(new Font(
+                                "Segoe UI",
+                                Font.BOLD,
+                                14));
+                tableHeader.setBackground(BROWN);
+                tableHeader.setForeground(Color.WHITE);
+                tableHeader.setPreferredSize(
+                                new Dimension(0, 42));
 
                 DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-
                 centerRenderer.setHorizontalAlignment(
                                 SwingConstants.CENTER);
 
@@ -302,18 +196,10 @@ public class Menu extends JPanel {
                                 .getColumn(5)
                                 .setCellRenderer(centerRenderer);
 
-                // =====================================================
-                // IMAGE COLUMN
-                // =====================================================
-
                 menuTable.getColumnModel()
                                 .getColumn(6)
                                 .setCellRenderer(
                                                 new ImageCellRenderer());
-
-                // =====================================================
-                // COLUMN WIDTH
-                // =====================================================
 
                 menuTable.getColumnModel()
                                 .getColumn(0)
@@ -321,7 +207,7 @@ public class Menu extends JPanel {
 
                 menuTable.getColumnModel()
                                 .getColumn(1)
-                                .setPreferredWidth(170);
+                                .setPreferredWidth(180);
 
                 menuTable.getColumnModel()
                                 .getColumn(2)
@@ -329,11 +215,11 @@ public class Menu extends JPanel {
 
                 menuTable.getColumnModel()
                                 .getColumn(3)
-                                .setPreferredWidth(90);
+                                .setPreferredWidth(100);
 
                 menuTable.getColumnModel()
                                 .getColumn(4)
-                                .setPreferredWidth(120);
+                                .setPreferredWidth(130);
 
                 menuTable.getColumnModel()
                                 .getColumn(5)
@@ -341,11 +227,7 @@ public class Menu extends JPanel {
 
                 menuTable.getColumnModel()
                                 .getColumn(6)
-                                .setPreferredWidth(100);
-
-                // =====================================================
-                // SORTER
-                // =====================================================
+                                .setPreferredWidth(110);
 
                 sorter = new TableRowSorter<>(
                                 tableModel);
@@ -353,38 +235,137 @@ public class Menu extends JPanel {
                 menuTable.setRowSorter(sorter);
 
                 // =====================================================
-                // SCROLL PANE
+                // SUMMARY CARDS
                 // =====================================================
+
+                JPanel cardsPanel = new JPanel(
+                                new GridLayout(
+                                                1,
+                                                3,
+                                                15,
+                                                0));
+                cardsPanel.setBackground(CREAM);
+
+                totalItemsLabel = new JLabel("0");
+                availableLabel = new JLabel("0");
+                outOfStockLabel = new JLabel("0");
+
+                cardsPanel.add(createModernSummaryCard(
+                                "TOTAL ITEMS",
+                                totalItemsLabel,
+                                BROWN));
+
+                cardsPanel.add(createModernSummaryCard(
+                                "AVAILABLE",
+                                availableLabel,
+                                new Color(70, 120, 75)));
+
+                cardsPanel.add(createModernSummaryCard(
+                                "OUT OF STOCK",
+                                outOfStockLabel,
+                                new Color(170, 70, 65)));
+
+                // FILTER BAR
+
+                JPanel filterPanel = new JPanel(new BorderLayout());
+                filterPanel.setBackground(Color.WHITE);
+                filterPanel.setBorder(
+                                BorderFactory.createCompoundBorder(
+                                                BorderFactory.createLineBorder(DARK_CREAM),
+                                                BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+
+                JPanel leftFilterPanel = new JPanel(
+                                new FlowLayout(FlowLayout.LEFT, 10, 8));
+                leftFilterPanel.setBackground(Color.WHITE);
+
+                JLabel searchLabel = new JLabel("Search");
+                searchLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                searchLabel.setForeground(TEXT);
+
+                searchField = new JTextField(17);
+                searchField.setPreferredSize(new Dimension(180, 32));
+
+                JLabel categoryLabel = new JLabel("Category");
+                categoryLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                categoryLabel.setForeground(TEXT);
+
+                categoryBox = new JComboBox<>();
+                categoryBox.setPreferredSize(new Dimension(125, 32));
+
+                JLabel availabilityLabel = new JLabel("Availability");
+                availabilityLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                availabilityLabel.setForeground(TEXT);
+
+                availabilityBox = new JComboBox<>(
+                                new String[] {
+                                                "All",
+                                                "Available",
+                                                "Out of Stock"
+                                });
+                availabilityBox.setPreferredSize(new Dimension(135, 32));
+
+                JButton refreshButton = createButton("Refresh", BROWN);
+                refreshButton.setPreferredSize(new Dimension(125,32));
+                refreshButton.setFont(new Font("Segoe UI", Font.BOLD,13));
+
+                leftFilterPanel.add(searchLabel);
+                leftFilterPanel.add(searchField);
+                leftFilterPanel.add(categoryLabel);
+                leftFilterPanel.add(categoryBox);
+                leftFilterPanel.add(availabilityLabel);
+                leftFilterPanel.add(availabilityBox);
+
+                filterPanel.add(leftFilterPanel, BorderLayout.CENTER);
+                filterPanel.add(refreshButton, BorderLayout.EAST);
+               
+                // TOP CONTENT
+
+                JPanel topContent = new JPanel();
+                topContent.setLayout(new BoxLayout(
+                                topContent,
+                                BoxLayout.Y_AXIS));
+                topContent.setBackground(CREAM);
+                topContent.setBorder(
+                                BorderFactory.createEmptyBorder(
+                                                0, 25, 8, 25));
+
+                topContent.add(headerPanel);
+                topContent.add(cardsPanel);
+                topContent.add(Box.createVerticalStrut(10));
+                topContent.add(filterPanel);
+
+                add(
+                                topContent,
+                                BorderLayout.NORTH);
+
+                // TABLE AREA
 
                 JScrollPane scrollPane = new JScrollPane(menuTable);
 
                 scrollPane.setBorder(
                                 BorderFactory.createLineBorder(
                                                 DARK_CREAM));
+                scrollPane.getViewport().setBackground(
+                                Color.WHITE);
 
-                JPanel centerPanel = new JPanel(
-                                new BorderLayout(10, 10));
-
-                centerPanel.setBackground(CREAM);
-
-                centerPanel.setBorder(
+                JPanel tablePanel = new JPanel(
+                                new BorderLayout());
+                tablePanel.setBackground(CREAM);
+                tablePanel.setBorder(
                                 BorderFactory.createEmptyBorder(
-                                                0, 25, 10, 25));
+                                                0, 25, 8, 25));
 
-                centerPanel.add(
+                tablePanel.add(
                                 scrollPane,
                                 BorderLayout.CENTER);
 
-                // =====================================================
-                // BUTTON PANEL
-                // =====================================================
+                // ACTION BUTTONS
 
                 JPanel buttonPanel = new JPanel(
                                 new FlowLayout(
                                                 FlowLayout.RIGHT,
                                                 10,
                                                 5));
-
                 buttonPanel.setBackground(CREAM);
 
                 JButton addButton = createButton(
@@ -403,24 +384,20 @@ public class Menu extends JPanel {
                 buttonPanel.add(updateButton);
                 buttonPanel.add(deleteButton);
 
-                centerPanel.add(
+                tablePanel.add(
                                 buttonPanel,
                                 BorderLayout.SOUTH);
 
                 add(
-                                centerPanel,
+                                tablePanel,
                                 BorderLayout.CENTER);
 
-                // =====================================================
                 // LOAD DATA
-                // =====================================================
 
                 loadCategories();
                 loadFoodItems();
 
-                // =====================================================
                 // BUTTON ACTIONS
-                // =====================================================
 
                 addButton.addActionListener(
                                 e -> showAddDialog());
@@ -434,9 +411,7 @@ public class Menu extends JPanel {
                 refreshButton.addActionListener(
                                 e -> refreshTable());
 
-                // =====================================================
                 // SEARCH
-                // =====================================================
 
                 searchField.getDocument()
                                 .addDocumentListener(
@@ -467,9 +442,7 @@ public class Menu extends JPanel {
                 availabilityBox.addActionListener(
                                 e -> searchItems());
 
-                // =====================================================
                 // DOUBLE CLICK
-                // =====================================================
 
                 menuTable.addMouseListener(
                                 new MouseAdapter() {
@@ -485,62 +458,65 @@ public class Menu extends JPanel {
                                 });
         }
 
-        // =========================================================
-        // SUMMARY CARD
-        // =========================================================
+        // MODERN SUMMARY CARD
 
-        private JPanel createSummaryCard(
+        private JPanel createModernSummaryCard(
                         String title,
-                        JLabel valueLabel) {
+                        JLabel valueLabel,
+                        Color accent) {
 
                 JPanel panel = new JPanel(
-                                new BorderLayout());
+                                new BorderLayout(12, 0));
 
-                panel.setBackground(
-                                LIGHT_CREAM);
+                panel.setBackground(LIGHT_CREAM);
 
                 panel.setBorder(
                                 BorderFactory.createCompoundBorder(
                                                 BorderFactory.createLineBorder(
                                                                 DARK_CREAM),
                                                 BorderFactory.createEmptyBorder(
-                                                                15, 15, 15, 15)));
+                                                                13, 16, 13, 16)));
+
+                JPanel accentBar = new JPanel();
+                accentBar.setBackground(accent);
+                accentBar.setPreferredSize(
+                                new Dimension(5, 0));
+
+                JPanel content = new JPanel();
+                content.setLayout(new BoxLayout(
+                                content,
+                                BoxLayout.Y_AXIS));
+                content.setBackground(LIGHT_CREAM);
 
                 JLabel titleLabel = new JLabel(title);
-
-                titleLabel.setFont(
-                                new Font(
-                                                "Segoe UI",
-                                                Font.PLAIN,
-                                                14));
-
+                titleLabel.setFont(new Font(
+                                "Segoe UI",
+                                Font.BOLD,
+                                12));
                 titleLabel.setForeground(
-                                new Color(100, 90, 80));
+                                new Color(105, 95, 85));
 
-                valueLabel.setFont(
-                                new Font(
-                                                "Segoe UI",
-                                                Font.BOLD,
-                                                26));
+                valueLabel.setFont(new Font(
+                                "Segoe UI",
+                                Font.BOLD,
+                                27));
+                valueLabel.setForeground(accent);
 
-                valueLabel.setForeground(
-                                BROWN);
-
-                panel.add(
-                                titleLabel,
-                                BorderLayout.NORTH);
+                content.add(titleLabel);
+                content.add(Box.createVerticalStrut(5));
+                content.add(valueLabel);
 
                 panel.add(
-                                valueLabel,
+                                accentBar,
+                                BorderLayout.WEST);
+
+                panel.add(
+                                content,
                                 BorderLayout.CENTER);
 
                 return panel;
         }
-
-        // =========================================================
         // BUTTON
-        // =========================================================
-
         private JButton createButton(
                         String text,
                         Color color) {
@@ -567,12 +543,27 @@ public class Menu extends JPanel {
                                 BorderFactory.createEmptyBorder(
                                                 9, 16, 9, 16));
 
+                button.addMouseListener(
+                                new MouseAdapter() {
+
+                                        @Override
+                                        public void mouseEntered(
+                                                        MouseEvent e) {
+                                                button.setBackground(
+                                                                color.brighter());
+                                        }
+
+                                        @Override
+                                        public void mouseExited(
+                                                        MouseEvent e) {
+                                                button.setBackground(color);
+                                        }
+                                });
+
                 return button;
         }
 
-        // =========================================================
         // LOAD CATEGORIES
-        // =========================================================
 
         private void loadCategories() {
 
@@ -597,9 +588,7 @@ public class Menu extends JPanel {
                 }
         }
 
-        // =========================================================
         // LOAD FOOD ITEMS
-        // =========================================================
 
         private void loadFoodItems() {
 
@@ -615,9 +604,7 @@ public class Menu extends JPanel {
                 updateSummary();
         }
 
-        // =========================================================
         // ADD FOOD ROW
-        // =========================================================
 
         private void addFoodRow(
                         FoodItem food) {
@@ -643,9 +630,7 @@ public class Menu extends JPanel {
                                 });
         }
 
-        // =========================================================
         // GET CATEGORY NAME
-        // =========================================================
 
         private String getCategoryName(
                         int categoryId) {
@@ -661,9 +646,7 @@ public class Menu extends JPanel {
                 return "Unknown";
         }
 
-        // =========================================================
         // ADD ITEM
-        // =========================================================
 
         private void showAddDialog() {
 
@@ -784,9 +767,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // VALIDATE NAME
-                // =====================================================
 
                 String name = nameField.getText()
                                 .trim();
@@ -799,9 +780,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // VALIDATE CATEGORY
-                // =====================================================
 
                 if (categoryField.getSelectedItem() == null) {
 
@@ -826,9 +805,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // VALIDATE PRICE
-                // =====================================================
 
                 BigDecimal price;
 
@@ -856,9 +833,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // VALIDATE QUANTITY
-                // =====================================================
 
                 int quantity;
 
@@ -885,9 +860,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // AVAILABILITY
-                // =====================================================
 
                 int available = availabilityField
                                 .getSelectedItem()
@@ -896,9 +869,7 @@ public class Menu extends JPanel {
                                                 ? 1
                                                 : 0;
 
-                // =====================================================
                 // IMAGE
-                // =====================================================
 
                 String imagePath = null;
 
@@ -912,9 +883,7 @@ public class Menu extends JPanel {
                         }
                 }
 
-                // =====================================================
                 // CREATE FOOD OBJECT
-                // =====================================================
 
                 FoodItem food = new FoodItem();
 
@@ -936,9 +905,7 @@ public class Menu extends JPanel {
                 food.setAvailableQty(
                                 quantity);
 
-                // =====================================================
                 // SAVE
-                // =====================================================
 
                 boolean success = foodItemDAO.addFoodItem(
                                 food);
@@ -960,9 +927,7 @@ public class Menu extends JPanel {
                 }
         }
 
-        // =========================================================
         // UPDATE ITEM
-        // =========================================================
 
         private void updateItem() {
 
@@ -1136,9 +1101,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // VALIDATE NAME
-                // =====================================================
 
                 String name = nameField.getText()
                                 .trim();
@@ -1151,9 +1114,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // CATEGORY
-                // =====================================================
 
                 String categoryName = categoryField
                                 .getSelectedItem()
@@ -1170,9 +1131,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // PRICE
-                // =====================================================
 
                 BigDecimal price;
 
@@ -1200,9 +1159,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // QUANTITY
-                // =====================================================
 
                 int quantity;
 
@@ -1229,9 +1186,7 @@ public class Menu extends JPanel {
                         return;
                 }
 
-                // =====================================================
                 // AVAILABILITY
-                // =====================================================
 
                 int available = availabilityField
                                 .getSelectedItem()
@@ -1240,9 +1195,7 @@ public class Menu extends JPanel {
                                                 ? 1
                                                 : 0;
 
-                // =====================================================
                 // IMAGE
-                // =====================================================
 
                 String imagePath = existingFood.getImage();
 
@@ -1256,9 +1209,7 @@ public class Menu extends JPanel {
                         }
                 }
 
-                // =====================================================
                 // UPDATE OBJECT
-                // =====================================================
 
                 existingFood.setCategoryId(
                                 categoryId);
@@ -1278,9 +1229,7 @@ public class Menu extends JPanel {
                 existingFood.setAvailableQty(
                                 quantity);
 
-                // =====================================================
                 // SAVE
-                // =====================================================
 
                 boolean success = foodItemDAO.updateFoodItem(
                                 existingFood);
@@ -1302,9 +1251,7 @@ public class Menu extends JPanel {
                 }
         }
 
-        // =========================================================
         // DELETE ITEM
-        // =========================================================
 
         private void deleteItem() {
 
@@ -1368,9 +1315,7 @@ public class Menu extends JPanel {
                 }
         }
 
-        // =========================================================
         // CHOOSE IMAGE
-        // =========================================================
 
         private File chooseImage() {
 
@@ -1382,76 +1327,39 @@ public class Menu extends JPanel {
                 FileNameExtensionFilter filter = new FileNameExtensionFilter(
                                 "Image Files (*.jpg, *.jpeg, *.png)",
                                 "jpg",
-                                "jpeg",
-                                "png");
+                                "jpeg", "png");
 
-                fileChooser.setFileFilter(
-                                filter);
+                fileChooser.setFileFilter(  filter);
 
-                int result = fileChooser.showOpenDialog(
-                                this);
+                int result = fileChooser.showOpenDialog(this);
 
                 if (result == JFileChooser.APPROVE_OPTION) {
-
-                        return fileChooser
-                                        .getSelectedFile();
+                        return fileChooser .getSelectedFile();
                 }
-
                 return null;
         }
 
-        // =========================================================
         // COPY IMAGE
-        // =========================================================
-
-        private String copyImage(
-                        File sourceFile) {
+        private String copyImage( File sourceFile) {
 
                 try {
-
                         String originalName = sourceFile.getName();
-
                         String extension = "";
-
                         int dot = originalName.lastIndexOf('.');
-
                         if (dot >= 0) {
-
-                                extension = originalName.substring(
-                                                dot);
+                                extension = originalName.substring( dot);
                         }
-
-                        String newFileName = System.currentTimeMillis()
-                                        + extension;
-
-                        File destination = new File(
-                                        imageFolder,
-                                        newFileName);
-
-                        Files.copy(
-                                        sourceFile.toPath(),
-                                        destination.toPath(),
-                                        StandardCopyOption.REPLACE_EXISTING);
-
+                        String newFileName = System.currentTimeMillis()+ extension;
+                        File destination = new File(imageFolder,newFileName);
+                        Files.copy(sourceFile.toPath(),destination.toPath(),StandardCopyOption.REPLACE_EXISTING);
                         return "images/" + newFileName;
-
                 } catch (IOException ex) {
-
-                        JOptionPane.showMessageDialog(
-                                        this,
-                                        "Image copy failed:\n"
-                                                        + ex.getMessage(),
-                                        "Image Error",
-                                        JOptionPane.ERROR_MESSAGE);
+                 JOptionPane.showMessageDialog(this,"Image copy failed:\n"+ ex.getMessage(),"Image Error", JOptionPane.ERROR_MESSAGE);
 
                         return null;
-                }
+                 }
         }
-
-        // =========================================================
         // IMAGE TABLE RENDERER
-        // =========================================================
-
         private class ImageCellRenderer
                         extends DefaultTableCellRenderer {
 
@@ -1465,215 +1373,98 @@ public class Menu extends JPanel {
                                 int column) {
 
                         JLabel label = new JLabel();
+                        label.setHorizontalAlignment(SwingConstants.CENTER);
+                        label.setVerticalAlignment(SwingConstants.CENTER);
+                        if (value != null && !value.toString().isEmpty()) {
 
-                        label.setHorizontalAlignment(
-                                        SwingConstants.CENTER);
-
-                        label.setVerticalAlignment(
-                                        SwingConstants.CENTER);
-
-                        if (value != null
-                                        && !value.toString()
-                                                        .isEmpty()) {
-
-                                File file = new File(
-                                                value.toString());
+                                File file = new File(value.toString());
 
                                 if (file.exists()) {
-
-                                        ImageIcon icon = new ImageIcon(
-                                                        file.getAbsolutePath());
-
-                                        Image image = icon.getImage()
-                                                        .getScaledInstance(
-                                                                        50,
-                                                                        50,
-                                                                        Image.SCALE_SMOOTH);
-
-                                        label.setIcon(
-                                                        new ImageIcon(image));
+                                        ImageIcon icon = new ImageIcon( file.getAbsolutePath());
+                                        Image image = icon.getImage().getScaledInstance(50,50,Image.SCALE_SMOOTH);
+                                        label.setIcon( new ImageIcon(image));
 
                                 } else {
-
-                                        label.setText(
-                                                        "No Image");
+                                   label.setText( "No Image");
                                 }
-
                         } else {
-
-                                label.setText(
-                                                "No Image");
+                                label.setText("No Image");
                         }
-
                         if (isSelected) {
-
                                 label.setOpaque(true);
-
-                                label.setBackground(
-                                                table.getSelectionBackground());
+                                label.setBackground(table.getSelectionBackground());
                         }
-
                         return label;
                 }
         }
-
-        // =========================================================
         // SEARCH
-        // =========================================================
-
         private void searchItems() {
+                if (searchField == null|| categoryBox == null|| availabilityBox == null) {
+                 return;
+                 }
 
-                if (searchField == null
-                                || categoryBox == null
-                                || availabilityBox == null) {
-                        return;
-                }
-
-                String searchText = searchField
-                                .getText()
-                                .trim()
-                                .toLowerCase();
-
-                String category = categoryBox
-                                .getSelectedItem()
-                                .toString();
-
-                String availability = availabilityBox
-                                .getSelectedItem()
-                                .toString();
-
+                String searchText = searchField.getText().trim().toLowerCase();
+                String category = categoryBox .getSelectedItem() .toString();
+                String availability = availabilityBox.getSelectedItem().toString();
                 sorter.setRowFilter(
                                 new RowFilter<DefaultTableModel, Integer>() {
-
                                         @Override
-                                        public boolean include(
-                                                        Entry<? extends DefaultTableModel, ? extends Integer> entry) {
-
+                                        public boolean include( Entry<? extends DefaultTableModel, ? extends Integer> entry) {
                                                 int row = entry.getIdentifier();
+                                                String id = tableModel.getValueAt(row, 0) .toString() .toLowerCase();
+                                                String name = tableModel.getValueAt(row,1).toString() .toLowerCase();
+                                                String itemCategory = tableModel.getValueAt( row, 2) .toString();
+                                                String itemAvailability = tableModel.getValueAt(row, 4).toString();
+                                                boolean searchMatch = searchText.isEmpty()|| id.contains(searchText)|| name.contains( searchText);
 
-                                                String id = tableModel
-                                                                .getValueAt(
-                                                                                row,
-                                                                                0)
-                                                                .toString()
-                                                                .toLowerCase();
-
-                                                String name = tableModel
-                                                                .getValueAt(
-                                                                                row,
-                                                                                1)
-                                                                .toString()
-                                                                .toLowerCase();
-
-                                                String itemCategory = tableModel
-                                                                .getValueAt(
-                                                                                row,
-                                                                                2)
-                                                                .toString();
-
-                                                String itemAvailability = tableModel
-                                                                .getValueAt(
-                                                                                row,
-                                                                                4)
-                                                                .toString();
-
-                                                boolean searchMatch = searchText.isEmpty()
-                                                                || id.contains(
-                                                                                searchText)
-                                                                || name.contains(
-                                                                                searchText);
-
-                                                boolean categoryMatch = category.equals("All")
-                                                                || category.equals(
-                                                                                itemCategory);
-
-                                                boolean availabilityMatch = availability.equals("All")
-                                                                || availability.equals(
-                                                                                itemAvailability);
-
-                                                return searchMatch
-                                                                && categoryMatch
-                                                                && availabilityMatch;
-                                        }
-                                });
+                                                boolean categoryMatch = category.equals("All")|| category.equals(  itemCategory);
+                                                boolean availabilityMatch = availability.equals("All")|| availability.equals(itemAvailability);
+                                                return searchMatch&& categoryMatch&& availabilityMatch;}});
         }
 
-        // =========================================================
         // REFRESH
-        // =========================================================
 
         private void refreshTable() {
-
                 searchField.setText("");
-
-                categoryBox.setSelectedItem(
-                                "All");
-
-                availabilityBox.setSelectedItem(
-                                "All");
+                categoryBox.setSelectedItem("All");
+                availabilityBox.setSelectedItem("All");
 
                 loadCategories();
                 loadFoodItems();
-
                 sorter.setRowFilter(null);
         }
-
-        // =========================================================
         // SUMMARY
-        // =========================================================
 
         private void updateSummary() {
-
                 if (tableModel == null) {
                         return;
                 }
-
                 int total = tableModel.getRowCount();
-
                 int available = 0;
                 int outOfStock = 0;
-
                 for (int i = 0; i < total; i++) {
-
-                        String status = tableModel
-                                        .getValueAt(
-                                                        i,
-                                                        4)
-                                        .toString();
-
+                        String status = tableModel.getValueAt(i, 4) .toString();
                         if (status.equals(
                                         "Available")) {
-
                                 available++;
 
                         } else {
-
-                                outOfStock++;
+                               outOfStock++;
                         }
                 }
 
                 if (totalItemsLabel != null) {
-
-                        totalItemsLabel.setText(
-                                        String.valueOf(total));
+                        totalItemsLabel.setText(String.valueOf(total));
                 }
-
                 if (availableLabel != null) {
-
-                        availableLabel.setText(
-                                        String.valueOf(available));
+                      availableLabel.setText(String.valueOf(available));
                 }
-
                 if (outOfStockLabel != null) {
-
-                        outOfStockLabel.setText(
-                                        String.valueOf(outOfStock));
+                        outOfStockLabel.setText(String.valueOf(outOfStock));
                 }
         }
 
-        // =========================================================
         // WARNING
-        // =========================================================
 
         private void showWarning(
                         String message) {

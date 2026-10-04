@@ -55,7 +55,7 @@ public class Orders extends JPanel {
 
         JLabel title = new JLabel("Order Management");
         title.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        title.setForeground(new Color(83, 53, 35));
+        title.setForeground(new Color(76, 58, 42));
 
         JLabel subtitle = new JLabel("Manage and monitor restaurant orders");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -618,14 +618,7 @@ public class Orders extends JPanel {
         cancelledLabel.setText(String.valueOf(cancelled));
     }
 
-    private boolean matchesDateFilterForSummary(Order order, String selectedDate) {
-        if ("All Time".equals(selectedDate)) {
-            return true;
-        }
-
-        return matchesDateFilter(order.getOrderDate(), selectedDate);
-    }
-
+    
     private boolean matchesSearch(Order order, String search) {
         return String.valueOf(order.getOrderId()).contains(search)
                 || String.valueOf(order.getEmployeeId()).contains(search)
