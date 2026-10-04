@@ -1,13 +1,11 @@
 package dao;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
 import model.User;
 import util.DBConnection;
 import util.PasswordUtil;
@@ -80,7 +78,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.login() error, username = " + username);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return null;
@@ -108,7 +106,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getUserById() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return null;
@@ -136,7 +134,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getUserByUsername() error, username = " + username);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return null;
@@ -160,7 +158,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.usernameExists() error, username = " + username);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -187,7 +185,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getAllUsers() error");
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return users;
@@ -221,7 +219,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.getUsers() error, page = " + page);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return users;
@@ -256,36 +254,49 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.addUser() error, username = " + user.getUsername());
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
     }
 
     /* ================================================================== */
-    /* 8. UPDATE USER  (name / role / status)                              */
-    /*    username aur password yahan se nahi badalte - uske liye          */
-    /*    updatePassword() use karo.                                       */
+    /* 8. UPDATE USER                                                      */
+    /*    name / username / role / salary / status update hote hain.       */
+    /*    Password alag updatePassword() se update hota hai.               */
     /* ================================================================== */
     public boolean updateUser(User user) {
 
-        String sql = "UPDATE users SET name = ?,username= ?, role = ?, salary = ?, status = ? WHERE user_id = ?";
+        String checkSql = "SELECT 1 FROM users WHERE username = ? AND user_id <> ?";
+        String sql = "UPDATE users SET name = ?, username = ?, role = ?, salary = ?, status = ? WHERE user_id = ?";
 
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement checkPs = con.prepareStatement(checkSql)) {
 
-            ps.setString(1, user.getName());
-            ps.setString(2, user.getUsername());
-            ps.setString(3, user.getRole());
-            ps.setBigDecimal(4, user.getSalary());
-            ps.setInt(5, user.getStatus());
-            ps.setInt(6, user.getUserId());
+            checkPs.setString(1, user.getUsername());
+            checkPs.setInt(2, user.getUserId());
 
-            return ps.executeUpdate() > 0;
+            try (ResultSet rs = checkPs.executeQuery()) {
+                if (rs.next()) {
+                    System.err.println("UserDAO.updateUser(): username already exists -> " + user.getUsername());
+                    return false;
+                }
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, user.getName());
+                ps.setString(2, user.getUsername());
+                ps.setString(3, user.getRole());
+                ps.setBigDecimal(4, user.getSalary());
+                ps.setInt(5, user.getStatus());
+                ps.setInt(6, user.getUserId());
+
+                return ps.executeUpdate() > 0;
+            }
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updateUser() error, userId = " + user.getUserId());
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -308,7 +319,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updatePassword() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -331,7 +342,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.updateStatus() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
@@ -362,7 +373,7 @@ public class UserDAO {
 
         } catch (SQLException e) {
             System.err.println("UserDAO.deleteUser() error, userId = " + userId);
-            e.printStackTrace();
+            System.err.println("Error: " + e.getMessage());
         }
 
         return false;
