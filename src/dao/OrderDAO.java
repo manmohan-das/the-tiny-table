@@ -4,8 +4,13 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import model.ChefOrder;
+import model.ChefOrderItem;
 import model.Order;
 import util.DBConnection;
 
@@ -17,10 +22,9 @@ public class OrderDAO {
         String sql = "SELECT * FROM orders ORDER BY order_id DESC";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 orders.add(mapOrder(rs));
             }
@@ -36,9 +40,8 @@ public class OrderDAO {
         String sql = "SELECT * FROM orders ORDER BY order_id DESC LIMIT ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -56,9 +59,8 @@ public class OrderDAO {
         String sql = "SELECT * FROM orders WHERE order_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -79,9 +81,8 @@ public class OrderDAO {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, order.getEmployeeId());
             ps.setString(2, order.getCustomerName());
             ps.setString(3, order.getCustomerPhone());
@@ -106,9 +107,8 @@ public class OrderDAO {
                 "total_amount = ?, status = ? WHERE order_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, order.getEmployeeId());
             ps.setString(2, order.getCustomerName());
             ps.setString(3, order.getCustomerPhone());
@@ -131,9 +131,8 @@ public class OrderDAO {
         String sql = "UPDATE orders SET status = ? WHERE order_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, status);
             ps.setInt(2, orderId);
             return ps.executeUpdate() > 0;
@@ -147,10 +146,9 @@ public class OrderDAO {
     public int getTodayOrderCount() {
         String sql = "SELECT COUNT(*) FROM orders WHERE DATE(order_date) = CURDATE()";
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -166,10 +164,9 @@ public class OrderDAO {
                 "AND LOWER(role) IN ('employee', 'kitchen staff', 'kitchen_staff')";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -198,9 +195,8 @@ public class OrderDAO {
         String sql = "SELECT COALESCE(SUM(quantity), 0) FROM order_items WHERE order_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -228,10 +224,9 @@ public class OrderDAO {
                 "GROUP BY DAYOFWEEK(order_date)";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 int mysqlDay = rs.getInt("day_no");
                 int index = (mysqlDay + 5) % 7;
@@ -261,10 +256,9 @@ public class OrderDAO {
 
     private BigDecimal getAmount(String sql) {
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 BigDecimal amount = rs.getBigDecimal(1);
                 return amount == null ? BigDecimal.ZERO : amount;
@@ -273,5 +267,71 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return BigDecimal.ZERO;
+    }
+
+    // ==========================================
+    // CHEF ORDERS
+    // ==========================================
+
+    public List<ChefOrder> getTodayChefOrders() {
+        List<ChefOrder> orders = new ArrayList<>();
+        String sql = "SELECT " +
+                "o.order_id, o.customer_name, o.customer_phone, o.order_date, o.status, o.note, " +
+                "oi.food_id, oi.quantity, " +
+                "f.food_name " +
+                "FROM orders o " +
+                "LEFT JOIN order_items oi ON oi.order_id = o.order_id " +
+                "LEFT JOIN food_items f ON f.food_id = oi.food_id " +
+                "WHERE DATE(o.order_date) = CURDATE() " +
+                "AND o.status NOT IN ('COMPLETED', 'CANCELLED') " +
+                "ORDER BY o.order_id ASC, oi.order_item_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet result = statement.executeQuery()) {
+
+            LinkedHashMap<Integer, ChefOrder> orderMap = new LinkedHashMap<>();
+
+            while (result.next()) {
+                int orderNo = result.getInt("order_id");
+                ChefOrder order = orderMap.get(orderNo);
+
+                if (order == null) {
+                    order = new ChefOrder();
+                    order.orderNo = orderNo;
+                    String cName = result.getString("customer_name");
+                    order.customer_name = (cName == null || cName.trim().isEmpty()) ? "Walk-in Guest" : cName.trim();
+                    String cPhone = result.getString("customer_phone");
+                    order.customer_phone = (cPhone == null || cPhone.trim().isEmpty()) ? "" : cPhone.trim();
+
+                    java.sql.Timestamp timestamp = result.getTimestamp("order_date");
+                    order.order_date = (timestamp != null)
+                            ? timestamp.toLocalDateTime()
+                            : LocalDateTime.now();
+
+                    String status = result.getString("status");
+                    order.status = (status == null || status.trim().isEmpty()) ? "PLACED" : status.trim();
+
+                    String note = result.getString("note");
+                    order.note = (note == null || note.trim().isEmpty()) ? "" : note.trim();
+
+                    order.items = new java.util.LinkedList<>();
+                    orderMap.put(orderNo, order);
+                }
+
+                String foodName = result.getString("food_name");
+                int quantity = result.getInt("quantity");
+
+                if (foodName != null && !foodName.trim().isEmpty() && quantity > 0) {
+                    order.items.add(new ChefOrderItem(foodName, quantity));
+                }
+            }
+
+            orders.addAll(orderMap.values());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return orders;
     }
 }

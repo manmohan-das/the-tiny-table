@@ -1808,15 +1808,15 @@ public class MenuAndOrderTable extends JFrame {
         }
 
         // ================= DATA =================
-        static class Food {
+        public static class Food {
 
-                String name;
-                String category;
-                String subCategory;
-                double price;
-                String image;
+                public String name;
+                public String category;
+                public String subCategory;
+                public double price;
+                public String image;
 
-                Food(
+                public Food(
                                 String name,
                                 String category,
                                 String subCategory,
@@ -1831,23 +1831,23 @@ public class MenuAndOrderTable extends JFrame {
                 }
         }
 
-        static class Order {
+        public static class Order {
 
-                int number;
-                String employee;
-                String customer;
-                String phone;
-                Map<Food, Integer> items;
-                double subtotal;
-                double discount;
-                double gst;
-                double total;
-                String notes;
-                String paymentMethod = "CASH";
-                String status = "Pending";
-                LocalDateTime createdAt;
+                public int number;
+                public String employee;
+                public String customer;
+                public String phone;
+                public Map<Food, Integer> items;
+                public double subtotal;
+                public double discount;
+                public double gst;
+                public double total;
+                public String notes;
+                public String paymentMethod = "CASH";
+                public String status = "Pending";
+                public LocalDateTime createdAt;
 
-                Order(int number, String employee, String customer, String phone,
+                public Order(int number, String employee, String customer, String phone,
                                 Map<Food, Integer> items, double subtotal, double discount,
                                 double gst, double total, String notes, LocalDateTime createdAt) {
                         this.number = number;

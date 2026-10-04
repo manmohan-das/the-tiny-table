@@ -1,13 +1,8 @@
 package employeePanel;
+import java.awt.*;
+import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
-
-import employeePanel.MenuAndOrderTable.Food;
-import employeePanel.MenuAndOrderTable.RoundedPanel;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
 
 /**
  * Checkout / Order Settlement page for The Tiny Table.

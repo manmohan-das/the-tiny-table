@@ -11,21 +11,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-/**
- * THE TINY TABLE - Today's Orders / Today's Bills
- *
- * Uses the current MySQL database through MenuAndOrderTable.DB.
- * Current schema:
- * orders.order_id, employee_id, customer_name, customer_phone,
- * order_date, subtotal, discount, tax, total_amount, status, note
- * order_items + food_items are used for item details.
- */
 public class TodaysOrders extends JPanel {
 
-    private static final DateTimeFormatter DATE_FORMAT =
-            DateTimeFormatter.ofPattern("dd MMM yyyy");
-    private static final DateTimeFormatter TIME_FORMAT =
-            DateTimeFormatter.ofPattern("hh:mm a");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
 
     private final MenuAndOrderTable app;
     private final boolean billPage;
@@ -58,10 +47,11 @@ public class TodaysOrders extends JPanel {
 
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         right.setOpaque(false);
-        if (app.search != null) right.add(app.search);
+        if (app.search != null)
+            right.add(app.search);
 
-        JButton refresh = actionButton("↻  Refresh", MenuAndOrderTable.GREEN);
-        refresh.addActionListener(e -> buildPage());
+        JButton refresh = actionButton("\u21BB  Refresh", MenuAndOrderTable.GREEN);
+        refresh.addActionListener(e -> refreshPage());
         right.add(refresh);
         right.add(date);
 
@@ -75,8 +65,9 @@ public class TodaysOrders extends JPanel {
         table.setBorder(new LineBorder(MenuAndOrderTable.BORDER, 1, true));
 
         String[] heads = billPage
-                ? new String[]{"Bill / Order", "Customer", "Phone", "Bill Amount", "Date", "Time", "Status", "Action"}
-                : new String[]{"Order No.", "Customer", "Phone", "Bill Amount", "Status", "Date", "Time", "Action"};
+                ? new String[] { "Bill / Order", "Customer", "Phone", "Bill Amount", "Date", "Time", "Status",
+                        "Action" }
+                : new String[] { "Order No.", "Customer", "Phone", "Bill Amount", "Status", "Date", "Time", "Action" };
 
         JPanel header = new JPanel(new GridLayout(1, heads.length));
         header.setBackground(MenuAndOrderTable.MUTED);
@@ -100,14 +91,17 @@ public class TodaysOrders extends JPanel {
         // Load ALL orders for today directly from MySQL.
         // Do not filter by the currently logged-in employee.
         for (MenuAndOrderTable.Order o : loadTodaysOrdersFromDatabase()) {
-            if (o == null) continue;
+            if (o == null)
+                continue;
 
             String status = dbStatus(o.status);
 
             // Cancelled orders are not shown in Today's Bills.
-            if (billPage && "Cancelled".equals(status)) continue;
+            if (billPage && "Cancelled".equals(status))
+                continue;
 
-            if (!matchesSearch(o, query, billPage)) continue;
+            if (!matchesSearch(o, query, billPage))
+                continue;
 
             found = true;
             table.add(managementRow(o));
@@ -133,98 +127,21 @@ public class TodaysOrders extends JPanel {
         add(scroll, BorderLayout.CENTER);
     }
 
-    /**
-     * Reads today's orders directly from the MySQL schema.
-     * This intentionally does NOT use MenuAndOrderTable.orders because that
-     * list is filtered by the logged-in employee. Today's Orders/Bills must
-     * show orders created by every employee.
-     */
     private java.util.List<MenuAndOrderTable.Order> loadTodaysOrdersFromDatabase() {
         java.util.List<MenuAndOrderTable.Order> result = new ArrayList<>();
         Map<Integer, MenuAndOrderTable.Order> grouped = new LinkedHashMap<>();
 
-        String sql =
-                "SELECT o.order_id, o.employee_id, u.name AS employee_name, " +
-                "o.customer_name, o.customer_phone, o.order_date, " +
-                "o.subtotal, o.discount, o.tax, o.total_amount, o.status, o.note, " +
-                "oi.order_item_id, oi.quantity, f.food_name, f.price, f.image, " +
-                "c.category_name " +
-                "FROM orders o " +
-                "JOIN users u ON u.user_id = o.employee_id " +
-                "LEFT JOIN order_items oi ON oi.order_id = o.order_id " +
-                "LEFT JOIN food_items f ON f.food_id = oi.food_id " +
-                "LEFT JOIN categories c ON c.category_id = f.category_id " +
-                "WHERE DATE(o.order_date) = CURDATE() " +
-                "ORDER BY o.order_id ASC, oi.order_item_id ASC";
+        dao.EmployeePanelDAO.loadAllTodaysOrders(grouped, MenuAndOrderTable.FOOD);
 
-        try (Connection c = MenuAndOrderTable.DB.connect();
-             PreparedStatement p = c.prepareStatement(sql);
-             ResultSet r = p.executeQuery()) {
-
-            while (r.next()) {
-                int orderId = r.getInt("order_id");
-                MenuAndOrderTable.Order order = grouped.get(orderId);
-
-                if (order == null) {
-                    Timestamp ts = r.getTimestamp("order_date");
-                    LocalDateTime dt = ts == null
-                            ? LocalDateTime.now()
-                            : ts.toLocalDateTime();
-
-                    order = new MenuAndOrderTable.Order(
-                            orderId,
-                            r.getString("employee_name"),
-                            r.getString("customer_name"),
-                            r.getString("customer_phone"),
-                            new LinkedHashMap<>(),
-                            r.getDouble("subtotal"),
-                            r.getDouble("discount"),
-                            r.getDouble("tax"),
-                            r.getDouble("total_amount"),
-                            r.getString("note"),
-                            dt
-                    );
-                    order.status = dbStatus(r.getString("status"));
-                    grouped.put(orderId, order);
-                }
-
-                String foodName = r.getString("food_name");
-                if (foodName != null && !foodName.trim().isEmpty()) {
-                    MenuAndOrderTable.Food food = MenuAndOrderTable.DB.findFood(foodName);
-
-                    if (food == null) {
-                        food = new MenuAndOrderTable.Food(
-                                foodName,
-                                safe(r.getString("category_name")),
-                                "",
-                                r.getDouble("price"),
-                                r.getString("image")
-                        );
-                    }
-
-                    order.items.put(food, r.getInt("quantity"));
-                }
-            }
-
-            result.addAll(grouped.values());
-
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    app,
-                    "Unable to load today's orders from MySQL.\n\n" + ex.getMessage(),
-                    "Database Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-
+        result.addAll(grouped.values());
         return result;
     }
 
     private boolean matchesSearch(MenuAndOrderTable.Order o,
-                                  String query,
-                                  boolean billPage) {
-        if (query.isEmpty()) return true;
+            String query,
+            boolean billPage) {
+        if (query.isEmpty())
+            return true;
 
         String orderNo = MenuAndOrderTable.formatOrder(o.number).toLowerCase();
         String billNo = ("b-" + MenuAndOrderTable.formatOrder(o.number)).toLowerCase();
@@ -247,16 +164,16 @@ public class TodaysOrders extends JPanel {
         String status = dbStatus(o.status);
 
         String[] values = billPage
-                ? new String[]{
+                ? new String[] {
                         "B-" + MenuAndOrderTable.formatOrder(o.number),
                         safe(o.customer), safe(o.phone),
-                        "₹ " + MenuAndOrderTable.money(o.total),
-                        date, time, status, ""}
-                : new String[]{
+                        "\u20B9 " + MenuAndOrderTable.money(o.total),
+                        date, time, status, "" }
+                : new String[] {
                         MenuAndOrderTable.formatOrder(o.number),
                         safe(o.customer), safe(o.phone),
-                        "₹ " + MenuAndOrderTable.money(o.total),
-                        status, date, time, ""};
+                        "\u20B9 " + MenuAndOrderTable.money(o.total),
+                        status, date, time, "" };
 
         JPanel row = new JPanel(new GridLayout(1, values.length));
         row.setBackground(MenuAndOrderTable.SURFACE);
@@ -343,9 +260,8 @@ public class TodaysOrders extends JPanel {
         dialog.setSize(620, 660);
         dialog.setLocationRelativeTo(app);
 
-        MenuAndOrderTable.RoundedPanel root =
-                new MenuAndOrderTable.RoundedPanel(
-                        Color.decode("#F7F1E5"), 20);
+        MenuAndOrderTable.RoundedPanel root = new MenuAndOrderTable.RoundedPanel(
+                Color.decode("#F7F1E5"), 20);
         root.setBorder(new EmptyBorder(20, 22, 18, 22));
         root.setLayout(new BorderLayout(0, 12));
 
@@ -392,8 +308,8 @@ public class TodaysOrders extends JPanel {
         for (Map.Entry<MenuAndOrderTable.Food, Integer> e : o.items.entrySet()) {
             double lineTotal = e.getKey().price * e.getValue();
             JLabel item = new JLabel(
-                    e.getKey().name + "  × " + e.getValue()
-                            + "     ₹" + MenuAndOrderTable.money(lineTotal));
+                    e.getKey().name + "  \u00D7 " + e.getValue()
+                            + "     \u20B9" + MenuAndOrderTable.money(lineTotal));
             item.setFont(new Font("Serif", Font.PLAIN, 14));
             item.setForeground(MenuAndOrderTable.TEXT);
             item.setBorder(new EmptyBorder(5, 8, 5, 8));
@@ -409,13 +325,13 @@ public class TodaysOrders extends JPanel {
         }
 
         body.add(Box.createVerticalStrut(8));
-        body.add(detailLine("Subtotal", "₹ " + MenuAndOrderTable.money(o.subtotal), 15, false));
+        body.add(detailLine("Subtotal", "\u20B9 " + MenuAndOrderTable.money(o.subtotal), 15, false));
         if (o.discount > 0) {
-            body.add(detailLine("Discount", "- ₹ " + MenuAndOrderTable.money(o.discount), 15, false));
+            body.add(detailLine("Discount", "- \u20B9 " + MenuAndOrderTable.money(o.discount), 15, false));
         }
-        body.add(detailLine("GST / Tax", "₹ " + MenuAndOrderTable.money(o.gst), 15, false));
+        body.add(detailLine("GST / Tax", "\u20B9 " + MenuAndOrderTable.money(o.gst), 15, false));
         body.add(new JSeparator());
-        body.add(detailLine("Total Amount", "₹ " + MenuAndOrderTable.money(o.total), 20, true));
+        body.add(detailLine("Total Amount", "\u20B9 " + MenuAndOrderTable.money(o.total), 20, true));
 
         if (o.notes != null && !o.notes.trim().isEmpty()) {
             body.add(Box.createVerticalStrut(8));
@@ -432,7 +348,7 @@ public class TodaysOrders extends JPanel {
 
         if (!billPage) {
             JComboBox<String> statusBox = new JComboBox<>(
-                    new String[]{"Pending", "Preparing", "Ready", "Completed"});
+                    new String[] { "Pending", "Preparing", "Ready", "Completed" });
             statusBox.setSelectedItem(dbStatus(o.status));
 
             JButton update = greenButton("Update Status");
@@ -453,7 +369,7 @@ public class TodaysOrders extends JPanel {
             actions.add(edit);
 
             if (!"Completed".equals(dbStatus(o.status))) {
-                JButton cancel = redButton("✕  Cancel Order");
+                JButton cancel = redButton("\u2715  Cancel Order");
                 cancel.addActionListener(e -> {
                     dialog.dispose();
                     cancelOrder(o);
@@ -461,7 +377,7 @@ public class TodaysOrders extends JPanel {
                 actions.add(cancel);
             }
         } else {
-            JButton print = greenButton("🖨  Print Bill");
+            JButton print = greenButton("\uD83D\uDDA8  Print Bill");
             print.addActionListener(e -> app.printBill(o));
             actions.add(print);
         }
@@ -476,26 +392,133 @@ public class TodaysOrders extends JPanel {
     }
 
     private void updateStatusDirectly(MenuAndOrderTable.Order o) {
-        String sql = "UPDATE orders SET status=? WHERE order_id=? AND DATE(order_date)=CURDATE()";
+        dao.EmployeePanelDAO.updateStatus(o);
+    }
 
-        try (Connection c = MenuAndOrderTable.DB.connect();
-             PreparedStatement p = c.prepareStatement(sql)) {
-            p.setString(1, dbStatus(o.status));
-            p.setInt(2, o.number);
-            p.executeUpdate();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    app,
-                    "Could not update order status.\n\n" + ex.getMessage(),
-                    "Database Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+    void refreshSearchResults() {
+        Container parent = getParent();
+        if (parent == null) {
+            buildPage();
+            revalidate();
+            repaint();
+            return;
         }
+
+        String query = app.search == null
+                ? ""
+                : app.search.getText().trim().toLowerCase();
+
+        Component center = parent;
+        removeAll();
+        setLayout(new BorderLayout(12, 14));
+        setBackground(MenuAndOrderTable.BG);
+        setBorder(new EmptyBorder(18, 18, 18, 18));
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+
+        JLabel heading = new JLabel(
+                billPage ? "Today's Bills" : "Today's Orders");
+        heading.setFont(new Font("Serif", Font.BOLD, 32));
+        heading.setForeground(MenuAndOrderTable.GREEN);
+
+        JLabel date = new JLabel(LocalDate.now().format(DATE_FORMAT));
+        date.setFont(new Font("Serif", Font.BOLD, 15));
+        date.setForeground(MenuAndOrderTable.SUBTEXT);
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        right.setOpaque(false);
+        if (app.search != null)
+            right.add(app.search);
+
+        JButton refresh = actionButton("\u21BB  Refresh", MenuAndOrderTable.GREEN);
+        refresh.addActionListener(e -> refreshPage());
+        right.add(refresh);
+        right.add(date);
+
+        top.add(heading, BorderLayout.WEST);
+        top.add(right, BorderLayout.EAST);
+        add(top, BorderLayout.NORTH);
+
+        JPanel table = new JPanel();
+        table.setBackground(MenuAndOrderTable.SURFACE);
+        table.setLayout(new BoxLayout(table, BoxLayout.Y_AXIS));
+        table.setBorder(new LineBorder(MenuAndOrderTable.BORDER, 1, true));
+
+        String[] heads = billPage
+                ? new String[] { "Bill / Order", "Customer", "Phone", "Bill Amount", "Date", "Time", "Status",
+                        "Action" }
+                : new String[] { "Order No.", "Customer", "Phone", "Bill Amount", "Status", "Date", "Time", "Action" };
+
+        JPanel header = new JPanel(new GridLayout(1, heads.length));
+        header.setBackground(MenuAndOrderTable.MUTED);
+        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+        header.setPreferredSize(new Dimension(100, 48));
+
+        for (String h : heads) {
+            JLabel label = new JLabel(h, SwingConstants.CENTER);
+            label.setFont(new Font("Serif", Font.BOLD, 14));
+            label.setForeground(MenuAndOrderTable.TEXT);
+            header.add(label);
+        }
+        table.add(header);
+
+        boolean found = false;
+
+        for (MenuAndOrderTable.Order o : loadTodaysOrdersFromDatabase()) {
+            if (o == null)
+                continue;
+
+            String status = dbStatus(o.status);
+
+            if (billPage && "Cancelled".equals(status))
+                continue;
+
+            if (!matchesSearch(o, query, billPage))
+                continue;
+
+            found = true;
+            table.add(managementRow(o));
+        }
+
+        if (!found) {
+            JLabel empty = new JLabel(
+                    billPage
+                            ? "No bills generated today."
+                            : "No orders placed today.",
+                    SwingConstants.CENTER);
+            empty.setFont(new Font("Serif", Font.PLAIN, 16));
+            empty.setForeground(MenuAndOrderTable.SUBTEXT);
+            empty.setBorder(new EmptyBorder(45, 10, 45, 10));
+            empty.setAlignmentX(Component.CENTER_ALIGNMENT);
+            table.add(empty);
+        }
+
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getHorizontalScrollBar().setUnitIncrement(16);
+        add(scroll, BorderLayout.CENTER);
+
+        revalidate();
+        repaint();
+
+        SwingUtilities.invokeLater(() -> {
+            if (app.search != null) {
+                app.search.requestFocusInWindow();
+                app.search.setCaretPosition(app.search.getText().length());
+            }
+        });
     }
 
     private void refreshPage() {
         buildPage();
+        revalidate();
+        repaint();
+        if (getParent() != null) {
+            getParent().revalidate();
+            getParent().repaint();
+        }
     }
 
     JPanel detailLine(String left, String right, int size, boolean bold) {
@@ -520,10 +543,14 @@ public class TodaysOrders extends JPanel {
 
     Color statusColor(String status) {
         status = dbStatus(status);
-        if ("Preparing".equals(status)) return new Color(0xB18449);
-        if ("Ready".equals(status)) return MenuAndOrderTable.SUCCESS;
-        if ("Completed".equals(status)) return MenuAndOrderTable.SUCCESS;
-        if ("Cancelled".equals(status)) return MenuAndOrderTable.RED;
+        if ("Preparing".equals(status))
+            return new Color(0xB18449);
+        if ("Ready".equals(status))
+            return MenuAndOrderTable.SUCCESS;
+        if ("Completed".equals(status))
+            return MenuAndOrderTable.SUCCESS;
+        if ("Cancelled".equals(status))
+            return MenuAndOrderTable.RED;
         return MenuAndOrderTable.GREEN;
     }
 
@@ -544,23 +571,25 @@ public class TodaysOrders extends JPanel {
             return;
         }
 
-        if ("Cancelled".equals(status)) return;
+        if ("Cancelled".equals(status))
+            return;
 
         double charge = "Preparing".equals(status) ? o.total * .25 : 0;
 
         String msg = charge > 0
                 ? "Order " + MenuAndOrderTable.formatOrder(o.number)
-                + " is PREPARING.\n25% cancellation charge: ₹"
-                + MenuAndOrderTable.money(charge)
-                + "\nContinue cancellation?"
+                        + " is PREPARING.\n25% cancellation charge: \u20B9"
+                        + MenuAndOrderTable.money(charge)
+                        + "\nContinue cancellation?"
                 : "Order " + MenuAndOrderTable.formatOrder(o.number)
-                + " has not been completed.\nCancellation charge: ₹0"
-                + "\nContinue?";
+                        + " has not been completed.\nCancellation charge: \u20B90"
+                        + "\nContinue?";
 
         int result = JOptionPane.showConfirmDialog(
                 app, msg, "Cancel Order", JOptionPane.YES_NO_OPTION);
 
-        if (result != JOptionPane.YES_OPTION) return;
+        if (result != JOptionPane.YES_OPTION)
+            return;
 
         // Keep the order in MySQL with the real enum value 'Cancelled'.
         o.status = "Cancelled";
@@ -569,7 +598,6 @@ public class TodaysOrders extends JPanel {
         refreshPage();
     }
 
-    // ================= EDIT ORDER =================
     void editOrder(MenuAndOrderTable.Order o) {
         EditDialog d = new EditDialog(o);
         d.setVisible(true);
@@ -593,13 +621,12 @@ public class TodaysOrders extends JPanel {
             setSize(620, 610);
             setLocationRelativeTo(app);
 
-            MenuAndOrderTable.RoundedPanel root =
-                    new MenuAndOrderTable.RoundedPanel(Color.decode("#F7F1E5"), 20);
+            MenuAndOrderTable.RoundedPanel root = new MenuAndOrderTable.RoundedPanel(Color.decode("#F7F1E5"), 20);
             root.setBorder(new EmptyBorder(18, 20, 18, 20));
             root.setLayout(new BorderLayout(0, 10));
 
             JLabel title = new JLabel(
-                    "Edit Order  •  " + MenuAndOrderTable.formatOrder(o.number));
+                    "Edit Order  \u2022  " + MenuAndOrderTable.formatOrder(o.number));
             title.setFont(new Font("Serif", Font.BOLD, 25));
             title.setForeground(MenuAndOrderTable.SIDE);
             root.add(title, BorderLayout.NORTH);
@@ -741,7 +768,7 @@ public class TodaysOrders extends JPanel {
             name.setForeground(MenuAndOrderTable.TEXT);
 
             JLabel price = new JLabel(
-                    "₹ " + MenuAndOrderTable.money(f.price * q));
+                    "\u20B9 " + MenuAndOrderTable.money(f.price * q));
             price.setFont(new Font("Serif", Font.PLAIN, 13));
             price.setForeground(MenuAndOrderTable.SUBTEXT);
 
@@ -753,14 +780,16 @@ public class TodaysOrders extends JPanel {
             JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 14));
             controls.setOpaque(false);
 
-            JButton minus = new MenuAndOrderTable.CartButton("−");
+            JButton minus = new MenuAndOrderTable.CartButton("\u2212");
             JButton qty = new MenuAndOrderTable.CartButton(String.valueOf(q));
             JButton plus = new MenuAndOrderTable.CartButton("+");
             JButton remove = actionButton("Remove", MenuAndOrderTable.RED);
 
             minus.addActionListener(ev -> {
-                if (q <= 1) order.items.remove(f);
-                else order.items.put(f, q - 1);
+                if (q <= 1)
+                    order.items.remove(f);
+                else
+                    order.items.put(f, q - 1);
                 recalculateOrder(order);
                 refreshEditItems();
             });
@@ -793,8 +822,7 @@ public class TodaysOrders extends JPanel {
             dialog.setSize(570, 620);
             dialog.setLocationRelativeTo(this);
 
-            MenuAndOrderTable.RoundedPanel root =
-                    new MenuAndOrderTable.RoundedPanel(Color.decode("#F7F1E5"), 20);
+            MenuAndOrderTable.RoundedPanel root = new MenuAndOrderTable.RoundedPanel(Color.decode("#F7F1E5"), 20);
             root.setBorder(new EmptyBorder(16, 18, 16, 18));
             root.setLayout(new BorderLayout(0, 10));
 
@@ -846,7 +874,8 @@ public class TodaysOrders extends JPanel {
             image.setMaximumSize(new Dimension(56, 56));
 
             ImageIcon icon = app.loadImage(f.image, 56, 56);
-            if (icon != null) image.setIcon(icon);
+            if (icon != null)
+                image.setIcon(icon);
             else {
                 image.setText("FOOD");
                 image.setHorizontalAlignment(SwingConstants.CENTER);
@@ -864,7 +893,7 @@ public class TodaysOrders extends JPanel {
             name.setForeground(MenuAndOrderTable.TEXT);
 
             JLabel price = new JLabel(
-                    "₹ " + MenuAndOrderTable.money(f.price));
+                    "\u20B9 " + MenuAndOrderTable.money(f.price));
             price.setFont(new Font("Serif", Font.PLAIN, 13));
             price.setForeground(MenuAndOrderTable.SUBTEXT);
 
@@ -896,19 +925,21 @@ public class TodaysOrders extends JPanel {
         }
 
         void rebuildAddItemControls(JPanel controls,
-                                     MenuAndOrderTable.Food f) {
+                MenuAndOrderTable.Food f) {
             controls.removeAll();
             int q = order.items.getOrDefault(f, 0);
 
             if (q > 0) {
-                JButton minus = new MenuAndOrderTable.CartButton("−");
+                JButton minus = new MenuAndOrderTable.CartButton("\u2212");
                 JButton qty = new MenuAndOrderTable.CartButton(String.valueOf(q));
                 JButton plus = new MenuAndOrderTable.CartButton("+");
 
                 minus.addActionListener(e -> {
                     int current = order.items.getOrDefault(f, 0);
-                    if (current <= 1) order.items.remove(f);
-                    else order.items.put(f, current - 1);
+                    if (current <= 1)
+                        order.items.remove(f);
+                    else
+                        order.items.put(f, current - 1);
                     recalculateOrder(order);
                     refreshEditItems();
                     rebuildAddItemControls(controls, f);
@@ -962,69 +993,8 @@ public class TodaysOrders extends JPanel {
         }
     }
 
-    /** Persist the edited order header and its complete item list. */
     private boolean updateOrderAndItems(MenuAndOrderTable.Order o) {
-        try (Connection c = MenuAndOrderTable.DB.connect()) {
-            c.setAutoCommit(false);
-
-            String updateOrder =
-                    "UPDATE orders SET customer_name=?, customer_phone=?, "
-                    + "subtotal=?, discount=?, tax=?, total_amount=?, note=? "
-                    + "WHERE order_id=?";
-
-            try (PreparedStatement p = c.prepareStatement(updateOrder)) {
-                p.setString(1, o.customer);
-                p.setString(2, o.phone == null || o.phone.isEmpty() ? null : o.phone);
-                p.setDouble(3, o.subtotal);
-                p.setDouble(4, o.discount);
-                p.setDouble(5, o.gst);
-                p.setDouble(6, o.total);
-                p.setString(7, o.notes);
-                p.setInt(8, o.number);
-                p.executeUpdate();
-            }
-
-            try (PreparedStatement p = c.prepareStatement(
-                    "DELETE FROM order_items WHERE order_id=?")) {
-                p.setInt(1, o.number);
-                p.executeUpdate();
-            }
-
-            String insertItem =
-                    "INSERT INTO order_items(order_id,food_id,quantity,price,subtotal) "
-                    + "VALUES(?,?,?,?,?)";
-
-            String findFood =
-                    "SELECT food_id FROM food_items WHERE food_name=? LIMIT 1";
-
-            try (PreparedStatement foodStmt = c.prepareStatement(findFood);
-                 PreparedStatement itemStmt = c.prepareStatement(insertItem)) {
-
-                for (Map.Entry<MenuAndOrderTable.Food, Integer> e : o.items.entrySet()) {
-                    int foodId = 0;
-                    foodStmt.setString(1, e.getKey().name);
-                    try (ResultSet r = foodStmt.executeQuery()) {
-                        if (r.next()) foodId = r.getInt(1);
-                    }
-                    if (foodId <= 0) continue;
-
-                    int qty = e.getValue();
-                    itemStmt.setInt(1, o.number);
-                    itemStmt.setInt(2, foodId);
-                    itemStmt.setInt(3, qty);
-                    itemStmt.setDouble(4, e.getKey().price);
-                    itemStmt.setDouble(5, e.getKey().price * qty);
-                    itemStmt.addBatch();
-                }
-                itemStmt.executeBatch();
-            }
-
-            c.commit();
-            return true;
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        }
+        return dao.EmployeePanelDAO.updateOrderAndItemsFull(o);
     }
 
     void recalculateOrder(MenuAndOrderTable.Order o) {
@@ -1074,16 +1044,22 @@ public class TodaysOrders extends JPanel {
     }
 
     private static String safe(String s) {
-        return s == null || s.trim().isEmpty() ? "—" : s;
+        return s == null || s.trim().isEmpty() ? "\u2014" : s;
     }
 
     private static String dbStatus(String status) {
-        if (status == null) return "Pending";
-        if (status.equalsIgnoreCase("PLACED")) return "Pending";
-        if (status.equalsIgnoreCase("PREPARING")) return "Preparing";
-        if (status.equalsIgnoreCase("READY")) return "Ready";
-        if (status.equalsIgnoreCase("COMPLETED")) return "Completed";
-        if (status.equalsIgnoreCase("CANCELLED")) return "Cancelled";
+        if (status == null)
+            return "Pending";
+        if (status.equalsIgnoreCase("PLACED"))
+            return "Pending";
+        if (status.equalsIgnoreCase("PREPARING"))
+            return "Preparing";
+        if (status.equalsIgnoreCase("READY"))
+            return "Ready";
+        if (status.equalsIgnoreCase("COMPLETED"))
+            return "Completed";
+        if (status.equalsIgnoreCase("CANCELLED"))
+            return "Cancelled";
         return status;
     }
 
