@@ -11,6 +11,7 @@ import managerdashboard.sidebarpages.Employees;
 import managerdashboard.sidebarpages.Orders;
 import managerdashboard.sidebarpages.Payments;
 import managerdashboard.sidebarpages.Sales;
+import managerdashboard.sidebarpages.CategoryManagement;
 import model.Order;
 
 public class ManagerDashboard extends JFrame {
@@ -226,8 +227,12 @@ public class ManagerDashboard extends JFrame {
                 JButton paymentsBtn = createMenuButton(
                                 "💳  Payments");
 
+                JButton categoryBtn = createMenuButton(
+                                "📂 Categories");
+
                 topPanel.add(dashboardBtn);
                 topPanel.add(menuBtn);
+                topPanel.add(categoryBtn);
                 topPanel.add(employeesBtn);
                 topPanel.add(ordersBtn);
                 topPanel.add(salesBtn);
@@ -280,6 +285,21 @@ public class ManagerDashboard extends JFrame {
                 menuBtn.addActionListener(e -> {
                         setActiveMenuButton(menuBtn);
                         showMenuPage();
+                });
+
+                categoryBtn.addActionListener(e -> {
+                        setActiveMenuButton(categoryBtn);
+
+                        contentPanel.removeAll();
+
+                        CategoryManagement categoryPage = new CategoryManagement();
+
+                        contentPanel.add(
+                                        categoryPage,
+                                        BorderLayout.CENTER);
+
+                        contentPanel.revalidate();
+                        contentPanel.repaint();
                 });
 
                 employeesBtn.addActionListener(e -> {
