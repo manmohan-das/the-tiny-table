@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.*;
+import dao.TaxSettingsDAO;
 
 /**
  * Checkout / Order Settlement page for The Tiny Table.
@@ -804,7 +805,7 @@ public class OrderPreview extends JPanel {
                         paymentRow++);
                 addPaymentRow(center, compactSummaryRow("Discount on additions", addedDiscountValue, false),
                         paymentRow++);
-                addPaymentRow(center, compactSummaryRow("Tax on new items only", addedTaxValue, false), paymentRow++);
+                addPaymentRow(center, compactSummaryRow("Tax on new items only (" + TaxSettingsDAO.formatPercent(TaxSettingsDAO.getRatePercent()) + "%)", addedTaxValue, false), paymentRow++);
             }
             if (calculateRemovedSubtotal() > 0.005) {
                 addPaymentRow(center, compactSummaryRow("Removed items subtotal", removedSubtotalValue, false),
@@ -818,7 +819,7 @@ public class OrderPreview extends JPanel {
             addPaymentRow(center, summaryRow("Subtotal", subtotalValue, false), paymentRow++);
             addPaymentRow(center, summaryRow("Discount", discountValueForSummary(), false), paymentRow++);
             addPaymentRow(center, summaryRow("Taxable Value", taxableValue, false), paymentRow++);
-            addPaymentRow(center, summaryRow("GST (12%)", gstValue, false), paymentRow++);
+            addPaymentRow(center, summaryRow(TaxSettingsDAO.currentGstLabel(), gstValue, false), paymentRow++);
         }
         addPaymentRow(center, Box.createVerticalStrut(editedOrder == null ? 4 : 2), paymentRow++);
 
@@ -1054,7 +1055,7 @@ public class OrderPreview extends JPanel {
         double subtotal = calculateSubtotal();
         double discount = subtotal * getDiscountRate();
         double taxable = subtotal - discount;
-        double gst = taxable * .12;
+        double gst = taxable * TaxSettingsDAO.getRate();
         double total = taxable + gst;
         double amountToPay;
 
@@ -1064,12 +1065,16 @@ public class OrderPreview extends JPanel {
             double oldDiscountRate = previousOrder.subtotal > 0
                     ? previousOrder.discount / previousOrder.subtotal
                     : 0.0;
+            double oldTaxable = previousOrder.subtotal - previousOrder.discount;
+            double oldTaxRate = oldTaxable > 0.005
+                ? previousOrder.gst / oldTaxable
+                : TaxSettingsDAO.getRate(); 
             double addedDiscount = fixedAmountMode
                     ? Math.min(addedSubtotal, readFixedDiscountAmount())
                     : addedSubtotal * getDiscountRate();
             double removedDiscount = removedSubtotal * oldDiscountRate;
-            double addedTax = (addedSubtotal - addedDiscount) * .12;
-            double returnedTax = (removedSubtotal - removedDiscount) * .12;
+            double addedTax = (addedSubtotal - addedDiscount) * TaxSettingsDAO.getRate();
+            double returnedTax = (removedSubtotal - removedDiscount) * oldTaxRate;
 
             // Keep the original bill's paid amounts intact. Apply this screen's
             // selected discount only to additions; removed items return their
@@ -1228,7 +1233,7 @@ public class OrderPreview extends JPanel {
         } else {
             total = calculateSubtotal() -
                     (calculateSubtotal() * getDiscountRate());
-            total += total * .12;
+            total += total * TaxSettingsDAO.getRate();
         }
 
         try {
@@ -1318,7 +1323,7 @@ public class OrderPreview extends JPanel {
                 total = Math.max(0.0, editedOrder.total - previouslyPaid);
             } else {
                 total = calculateSubtotal() * (1 - getDiscountRate());
-                total += total * .12;
+                total += total * TaxSettingsDAO.getRate();
             }
 
             if (total > 0.005) {

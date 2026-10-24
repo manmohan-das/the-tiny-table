@@ -1,8 +1,10 @@
--- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
+CREATE DATABASE  IF NOT EXISTS `the_tiny_table` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `the_tiny_table`;
+-- MySQL dump 10.13  Distrib 8.0.43, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: the_tiny_table
 -- ------------------------------------------------------
--- Server version	9.5.0
+-- Server version	8.4.7
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -14,14 +16,6 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-SET @MYSQLDUMP_TEMP_LOG_BIN = @@SESSION.SQL_LOG_BIN;
-SET @@SESSION.SQL_LOG_BIN= 0;
-
---
--- GTID state at the beginning of the backup 
---
-
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '8384c127-f377-11f0-b6c1-a841f494b21c:1-2328';
 
 --
 -- Table structure for table `categories`
@@ -35,7 +29,7 @@ CREATE TABLE `categories` (
   `category_name` varchar(100) NOT NULL,
   PRIMARY KEY (`category_id`),
   UNIQUE KEY `category_name` (`category_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -44,7 +38,7 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (2,'Chinese'),(6,'Dessert'),(5,'Drinks'),(1,'Fast Food'),(3,'Pizza'),(4,'Snacks');
+INSERT INTO `categories` VALUES (2,'Chinese'),(6,'Dessert'),(5,'Drinks'),(1,'Fast Food'),(7,'Indian dish'),(3,'Pizza'),(4,'Snacks');
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -75,8 +69,33 @@ CREATE TABLE `food_items` (
 
 LOCK TABLES `food_items` WRITE;
 /*!40000 ALTER TABLE `food_items` DISABLE KEYS */;
-INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,NULL,1,20),(2,1,'Sandwich',60.00,NULL,1,15),(3,2,'Chowmin',70.00,NULL,1,20),(4,2,'Manchurian',90.00,NULL,1,15),(5,3,'Pizza',150.00,NULL,1,10),(6,4,'Momos',80.00,NULL,1,20),(7,4,'Samosa',20.00,'images/1790780353085.png',0,0),(8,4,'Egg Roll',60.00,NULL,1,15),(9,4,'French Fries',80.00,NULL,1,20),(10,5,'Cold Drink',40.00,NULL,1,30),(11,5,'Cold Coffee',70.00,NULL,1,20);
+INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20),(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15),(3,2,'Chowmin',70.00,'resources/foodImages/chowmein.png',1,20),(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15),(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10),(6,4,'Momos',80.00,'resources/foodImages/momos.png',1,20),(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0),(8,4,'Egg Roll',60.00,'resources/foodImages/eggroll.png',1,15),(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20),(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30),(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20);
 /*!40000 ALTER TABLE `food_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `gst_settings`
+--
+
+DROP TABLE IF EXISTS `gst_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gst_settings` (
+  `setting_key` varchar(100) NOT NULL,
+  `setting_value` decimal(7,3) NOT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `gst_settings`
+--
+
+LOCK TABLES `gst_settings` WRITE;
+/*!40000 ALTER TABLE `gst_settings` DISABLE KEYS */;
+INSERT INTO `gst_settings` VALUES ('gst_rate_percent',10.000,'2026-10-24 13:06:08');
+/*!40000 ALTER TABLE `gst_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -98,7 +117,7 @@ CREATE TABLE `order_items` (
   KEY `food_id` (`food_id`),
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
   CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`food_id`) REFERENCES `food_items` (`food_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=92 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -107,7 +126,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,1,1,1,80.00,80.00),(2,1,6,1,80.00,80.00),(3,1,7,2,20.00,40.00),(4,2,5,1,150.00,150.00),(5,2,9,1,80.00,80.00),(6,3,3,1,70.00,70.00),(7,3,8,1,60.00,60.00),(8,3,7,1,20.00,20.00),(9,4,5,2,150.00,300.00),(10,5,1,1,80.00,80.00),(11,5,10,1,40.00,40.00),(12,5,11,1,70.00,70.00);
+INSERT INTO `order_items` VALUES (1,1,1,1,80.00,80.00),(2,1,6,1,80.00,80.00),(3,1,7,2,20.00,40.00),(4,2,5,1,150.00,150.00),(5,2,9,1,80.00,80.00),(6,3,3,1,70.00,70.00),(7,3,8,1,60.00,60.00),(8,3,7,1,20.00,20.00),(9,4,5,2,150.00,300.00),(10,5,1,1,80.00,80.00),(11,5,10,1,40.00,40.00),(12,5,11,1,70.00,70.00),(15,6,10,1,40.00,40.00),(16,7,10,1,40.00,40.00),(17,7,11,1,70.00,70.00),(18,8,4,1,90.00,90.00),(19,9,10,1,40.00,40.00),(20,10,4,1,90.00,90.00),(21,11,4,1,90.00,90.00),(22,12,10,1,40.00,40.00),(27,13,3,1,70.00,70.00),(28,13,10,1,40.00,40.00),(29,13,2,1,60.00,60.00),(30,13,8,5,60.00,300.00),(31,13,4,1,90.00,90.00),(32,14,10,4,40.00,160.00),(33,14,2,4,60.00,240.00),(34,14,1,4,80.00,320.00),(35,14,11,4,70.00,280.00),(36,15,10,1,40.00,40.00),(37,16,4,2,90.00,180.00),(65,18,4,1,90.00,90.00),(66,18,10,1,40.00,40.00),(67,18,3,1,70.00,70.00),(68,18,11,1,70.00,70.00),(69,18,1,1,80.00,80.00),(70,18,2,1,60.00,60.00),(71,18,8,1,60.00,60.00),(72,18,6,1,80.00,80.00),(73,17,4,2,90.00,180.00),(74,17,11,1,70.00,70.00),(75,17,1,1,80.00,80.00),(76,17,10,1,40.00,40.00),(80,20,10,1,40.00,40.00),(81,20,2,1,60.00,60.00),(82,20,8,1,60.00,60.00),(83,20,6,1,80.00,80.00),(86,21,10,1,40.00,40.00),(87,21,2,1,60.00,60.00),(88,19,3,1,70.00,70.00),(89,19,10,2,40.00,80.00),(90,22,10,1,40.00,40.00),(91,23,10,1,40.00,40.00);
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -133,7 +152,7 @@ CREATE TABLE `orders` (
   PRIMARY KEY (`order_id`),
   KEY `employee_id` (`employee_id`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -142,7 +161,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,2,'Rahul Kumar','9876543210','2026-09-26 14:55:58',200.00,0.00,10.00,210.00,'Completed',NULL),(2,2,'Aman Kumar','9876543211','2026-09-26 14:55:58',230.00,10.00,11.00,231.00,'Completed',NULL),(3,3,'Rohit Singh','9876543212','2026-09-26 14:55:58',150.00,0.00,7.50,157.50,'Completed',NULL),(4,3,'Vikas Kumar','9876543213','2026-09-26 14:55:58',300.00,20.00,14.00,294.00,'Completed',NULL),(5,2,'Ankit Raj','9876543214','2026-09-26 14:55:58',170.00,0.00,8.50,178.50,'Completed',NULL);
+INSERT INTO `orders` VALUES (1,2,'Rahul Kumar','9876543210','2026-09-26 14:55:58',200.00,0.00,10.00,210.00,'Completed',NULL),(2,2,'Aman Kumar','9876543211','2026-09-26 14:55:58',230.00,10.00,11.00,231.00,'Completed',NULL),(3,3,'Rohit Singh','9876543212','2026-09-26 14:55:58',150.00,0.00,7.50,157.50,'Completed',NULL),(4,3,'Vikas Kumar','9876543213','2026-09-26 14:55:58',300.00,20.00,14.00,294.00,'Completed',NULL),(5,2,'Ankit Raj','9876543214','2026-09-26 14:55:58',170.00,0.00,8.50,178.50,'Completed',NULL),(6,3,'Walk-in Guest',NULL,'2026-10-04 09:29:33',40.00,0.00,4.80,44.80,'Cancelled',''),(7,3,'raman',NULL,'2026-10-04 09:57:08',110.00,13.20,11.62,108.42,'Completed',''),(8,3,'Walk-in Guest',NULL,'2026-10-04 16:18:59',0.00,0.00,0.00,0.00,'Preparing',''),(9,3,'Walk-in Guest',NULL,'2026-10-04 17:50:17',40.00,0.00,4.80,44.80,'Completed',''),(10,3,'Walk-in Guest',NULL,'2026-10-04 19:53:45',90.00,0.00,10.80,100.80,'Cancelled',''),(11,3,'Walk-in Guest',NULL,'2026-10-04 20:38:19',90.00,0.00,10.80,100.80,'Preparing',''),(12,3,'Walk-in Guest',NULL,'2026-10-04 21:01:40',40.00,0.00,4.80,44.80,'Pending',''),(13,3,'manmohan',NULL,'2026-10-05 11:23:27',560.00,28.00,63.84,595.84,'Pending',''),(14,2,'Walk-in Guest',NULL,'2026-10-06 16:09:49',1000.00,0.00,120.00,1120.00,'Pending',''),(15,2,'Walk-in Guest',NULL,'2026-10-06 16:19:22',40.00,0.00,4.80,44.80,'Pending',''),(16,2,'Manmohan',NULL,'2026-10-06 17:14:31',180.00,0.00,21.60,201.60,'Pending',''),(17,2,'Walk-in Guest',NULL,'2026-10-24 12:38:00',370.00,0.00,44.40,414.40,'Cancelled',''),(18,2,'Walk-in Guest',NULL,'2026-10-24 16:07:44',550.00,0.00,66.00,616.00,'Completed',''),(19,2,'Walk-in Guest',NULL,'2026-10-24 16:19:06',150.00,0.00,15.20,165.20,'Pending',''),(20,2,'Walk-in Guest',NULL,'2026-10-24 17:07:55',240.00,0.00,28.80,268.80,'Pending',''),(21,2,'Walk-in Guest',NULL,'2026-10-24 18:16:57',100.00,0.00,5.00,105.00,'Pending',''),(22,2,'Walk-in Guest',NULL,'2026-10-24 20:37:25',40.00,0.00,4.00,44.00,'Pending',''),(23,2,'Walk-in Guest',NULL,'2026-10-24 21:23:58',40.00,0.00,4.00,44.00,'Pending','');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -163,7 +182,7 @@ CREATE TABLE `payments` (
   PRIMARY KEY (`payment_id`),
   UNIQUE KEY `order_id` (`order_id`),
   CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -172,8 +191,36 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
-INSERT INTO `payments` VALUES (1,1,210.00,'Cash','Paid',NULL),(2,2,231.00,'UPI','Paid','2026-09-26 14:55:58'),(3,3,157.50,'Cash','Paid','2026-09-26 14:55:58'),(4,4,294.00,'Card','Paid','2026-09-26 14:55:58'),(5,5,178.50,'UPI','Paid','2026-09-26 14:55:58');
+INSERT INTO `payments` VALUES (1,1,210.00,'Cash','Paid',NULL),(2,2,231.00,'UPI','Paid','2026-09-26 14:55:58'),(3,3,157.50,'Cash','Paid','2026-09-26 14:55:58'),(4,4,294.00,'Card','Paid','2026-09-26 14:55:58'),(5,5,178.50,'UPI','Paid','2026-09-26 14:55:58'),(9,6,44.80,'Cash','Paid','2026-10-04 09:29:33'),(10,7,39.42,'Cash','Paid','2026-10-04 09:57:08'),(11,8,100.80,'Cash','Paid','2026-10-04 16:18:59'),(12,9,44.80,'Cash','Paid','2026-10-04 17:50:17'),(13,10,100.80,'Cash','Paid','2026-10-04 19:53:45'),(14,11,100.80,'Cash','Paid','2026-10-04 20:38:19'),(15,12,44.80,'Cash','Paid','2026-10-04 21:01:40'),(16,13,500.08,'Cash','Paid','2026-10-05 11:23:27'),(17,14,1120.00,'Cash','Paid','2026-10-06 16:09:49'),(18,15,44.80,'Cash','Paid','2026-10-06 16:19:22'),(19,16,201.60,'Cash','Paid','2026-10-06 17:14:31'),(20,17,414.40,'Card','Paid','2026-10-24 16:08:01'),(24,18,616.00,'Cash','Paid','2026-10-24 16:07:44'),(25,19,165.20,'UPI','Paid','2026-10-24 18:19:43'),(26,20,268.80,'Cash','Paid','2026-10-24 17:07:55'),(27,21,105.00,'Cash','Paid','2026-10-24 18:16:57'),(28,22,44.00,'UPI','Paid','2026-10-24 20:37:25'),(29,23,44.00,'Card','Paid','2026-10-24 21:23:58');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `store_profile`
+--
+
+DROP TABLE IF EXISTS `store_profile`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `store_profile` (
+  `profile_id` tinyint unsigned NOT NULL,
+  `store_name` varchar(150) NOT NULL DEFAULT 'The Tiny Table',
+  `address` varchar(255) NOT NULL DEFAULT '',
+  `phone` varchar(30) NOT NULL DEFAULT '',
+  `gstin` varchar(30) NOT NULL DEFAULT '',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`profile_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `store_profile`
+--
+
+LOCK TABLES `store_profile` WRITE;
+/*!40000 ALTER TABLE `store_profile` DISABLE KEYS */;
+INSERT INTO `store_profile` VALUES (1,'The Tiny Table','Purnea','8002870395','GSTIN00001','2026-10-24 16:09:33');
+/*!40000 ALTER TABLE `store_profile` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -188,12 +235,12 @@ CREATE TABLE `users` (
   `name` varchar(100) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('manager','employee','kitchen_staff') NOT NULL,
+  `role` enum('manager','employee','kitchen_staff') NOT NULL DEFAULT 'employee',
   `salary` decimal(10,2) NOT NULL DEFAULT '0.00',
   `status` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -202,10 +249,9 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Raman','r@man12','admin123','manager',85000.00,1),(2,'Manmohan','raman','123456','employee',70000.00,0),(3,'Amit Kumar','amit','123456','employee',30000.00,1),(4,'Kitchen Staff 1','kitchen1','123456','kitchen_staff',25000.00,1),(5,'Kitchen Staff 2','kitchen2','123456','kitchen_staff',20000.00,1),(9,'Kumkum kumari','kumkum','ku1234','employee',45000.00,1);
+INSERT INTO `users` VALUES (1,'Raman','r@man12','admin123','manager',100000.00,1),(2,'Employee1','employee1','123456','employee',70000.00,1),(3,'Amit Kumar','amit','123456','employee',30000.00,1),(4,'Kitchen Staff 1','kitchen1','123456','kitchen_staff',25000.00,1),(5,'Kitchen Staff 2','kitchen2','123456','kitchen_staff',20000.00,1),(9,'Kumkum kumari','kumkum','ku1234','manager',100000.00,1),(11,'Raman','raman','8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92','employee',134543.00,1),(14,'Manmohan','manmohan','123456','manager',100000.00,1),(15,'Milan','milan','8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92','manager',100000.00,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
-SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -216,4 +262,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-03 21:30:29
+-- Dump completed on 2026-10-24 21:46:03

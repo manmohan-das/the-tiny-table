@@ -14,6 +14,9 @@ import java.time.format.DateTimeFormatter;
 import java.sql.*;
 import java.util.*;
 
+import dao.TaxSettingsDAO;
+import dao.StoreProfileDAO;
+
 public class MenuAndOrderTable extends JFrame {
 
         // ================= COLORS =================
@@ -115,10 +118,11 @@ public class MenuAndOrderTable extends JFrame {
         public MenuAndOrderTable(String employeeName) {
 
                 employee = (employeeName == null || employeeName.trim().isEmpty())
-                ? "Employee"
-                : employeeName.trim();
+                                ? "Employee"
+                                : employeeName.trim();
 
-                setTitle("The Tiny Table");
+                String storeName = StoreProfileDAO.loadProfile().getStoreName();
+                setTitle(storeName);
 
                 setDefaultCloseOperation(
                                 JFrame.EXIT_ON_CLOSE);
@@ -131,7 +135,7 @@ public class MenuAndOrderTable extends JFrame {
 
                 getContentPane().setBackground(BG);
 
-                add(createHeader(), BorderLayout.NORTH);
+                add(createHeader(storeName), BorderLayout.NORTH);
                 add(createMain(), BorderLayout.CENTER);
 
                 setSize(1530, 820);
@@ -143,7 +147,7 @@ public class MenuAndOrderTable extends JFrame {
         }
 
         // ================= HEADER =================
-        JPanel createHeader() {
+        JPanel createHeader(String storeName) {
 
                 JPanel header = new JPanel(new BorderLayout());
 
@@ -164,7 +168,7 @@ public class MenuAndOrderTable extends JFrame {
 
                 logo.setOpaque(false);
 
-                JLabel title = new JLabel("The Tiny Table");
+                JLabel title = new JLabel(storeName);
 
                 title.setFont(
                                 new Font(
@@ -663,7 +667,7 @@ public class MenuAndOrderTable extends JFrame {
                 JPanel subtotalRow = priceRow("Total Price", 16, true);
                 subtotalValue = getRightValue(subtotalRow);
 
-                JPanel gstRow = priceRow("GST (12%)", 14, false);
+                JPanel gstRow = priceRow(TaxSettingsDAO.currentGstLabel(), 14, false);
                 gstValue = getRightValue(gstRow);
 
                 JPanel totalRow = priceRow("Total Amount", 20, true);
@@ -731,7 +735,7 @@ public class MenuAndOrderTable extends JFrame {
                                 bold ? Font.BOLD : Font.PLAIN,
                                 size));
 
-                if ("GST (12%)".equals(name))
+                if (name.startsWith("GST ("))
                         left.setForeground(SUBTEXT);
                 else
                         left.setForeground(GREEN);
@@ -743,7 +747,7 @@ public class MenuAndOrderTable extends JFrame {
                                 bold ? Font.BOLD : Font.PLAIN,
                                 size));
 
-                if ("GST (12%)".equals(name))
+                if (name.startsWith("GST ("))
                         right.setForeground(SUBTEXT);
                 else
                         right.setForeground(GREEN);
@@ -1139,7 +1143,7 @@ public class MenuAndOrderTable extends JFrame {
                         cartList.add(empty);
                 }
 
-                double gst = subtotal * .12;
+                double gst = subtotal * TaxSettingsDAO.getRate();
                 double total = subtotal + gst;
 
                 subtotalValue.setText("₹ " + money(subtotal));
@@ -1216,7 +1220,7 @@ public class MenuAndOrderTable extends JFrame {
 
                 double discount = subtotal * discountRate;
                 double taxable = subtotal - discount;
-                double gst = taxable * .12;
+                double gst = taxable * TaxSettingsDAO.getRate();
                 double total = taxable + gst;
 
                 Order order = new Order(
@@ -1270,9 +1274,16 @@ public class MenuAndOrderTable extends JFrame {
         }
 
         String createBill(Order o) {
+                StoreProfileDAO.Profile profile = StoreProfileDAO.loadProfile();
                 StringBuilder s = new StringBuilder();
 
-                s.append("          THE TINY TABLE\n");
+                s.append(profile.getStoreName()).append("\n");
+                if (!profile.getAddress().isEmpty())
+                        s.append("Address     : ").append(profile.getAddress()).append("\n");
+                if (!profile.getPhone().isEmpty())
+                        s.append("Store Phone : ").append(profile.getPhone()).append("\n");
+                if (!profile.getGstin().isEmpty())
+                        s.append("GSTIN       : ").append(profile.getGstin()).append("\n");
                 s.append("--------------------------------------\n");
                 s.append("Order No : #").append(formatOrder(o.number)).append("\n");
                 s.append("Employee : ").append(o.employee).append("\n");
@@ -1295,7 +1306,8 @@ public class MenuAndOrderTable extends JFrame {
                 s.append("--------------------------------------\n");
                 s.append("Subtotal : ₹").append(money(o.subtotal)).append("\n");
                 s.append("Discount : -₹").append(money(o.discount)).append("\n");
-                s.append("GST 12%  : ₹").append(money(o.gst)).append("\n");
+                s.append(TaxSettingsDAO.gstLabelForAmounts(o.subtotal, o.discount, o.gst)).append(" : ₹")
+                                .append(money(o.gst)).append("\n");
                 s.append("--------------------------------------\n");
                 s.append("TOTAL    : ₹").append(money(o.total));
 
@@ -1308,7 +1320,7 @@ public class MenuAndOrderTable extends JFrame {
                 PrinterJob job = PrinterJob.getPrinterJob();
 
                 job.setJobName(
-                                "The Tiny Table - Order #" +
+                                StoreProfileDAO.loadProfile().getStoreName() + " - Order #" +
                                                 formatOrder(order.number));
 
                 job.setPrintable(
@@ -1435,8 +1447,40 @@ public class MenuAndOrderTable extends JFrame {
                 JButton logout = redButton("Logout");
                 logout.setAlignmentX(Component.CENTER_ALIGNMENT);
                 logout.addActionListener(e -> {
+                        int result = JOptionPane.showConfirmDialog(
+                                        this,
+                                        "Are you sure you want to logout?",
+                                        "Logout",
+                                        JOptionPane.YES_NO_OPTION,
+                                        JOptionPane.QUESTION_MESSAGE);
+
+                        if (result != JOptionPane.YES_OPTION) {
+                                return;
+                        }
+
                         popup.setVisible(false);
                         dispose();
+
+                        SwingUtilities.invokeLater(() -> {
+                                try {
+                                        Class<?> loginClass = Class.forName("Login");
+                                        java.lang.reflect.Constructor<?> constructor = loginClass
+                                                        .getDeclaredConstructor();
+                                        constructor.setAccessible(true);
+
+                                        JFrame login = (JFrame) constructor.newInstance();
+                                        login.setVisible(true);
+                                } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                        JOptionPane.showMessageDialog(
+                                                        null,
+                                                        "Unable to open Login page.\n\n"
+                                                                        + ex.getClass().getSimpleName() + ": "
+                                                                        + ex.getMessage(),
+                                                        "Logout Error",
+                                                        JOptionPane.ERROR_MESSAGE);
+                                }
+                        });
                 });
                 box.add(logout);
 
@@ -1491,12 +1535,12 @@ public class MenuAndOrderTable extends JFrame {
 
                 Graphics2D border = out.createGraphics();
                 border.setRenderingHint(
-                        RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
+                                RenderingHints.KEY_ANTIALIASING,
+                                RenderingHints.VALUE_ANTIALIAS_ON);
                 border.setColor(GREEN);
                 border.setStroke(new BasicStroke(2f));
                 border.draw(new java.awt.geom.Ellipse2D.Float(
-                        1.5f, 1.5f, size - 3f, size - 3f));
+                                1.5f, 1.5f, size - 3f, size - 3f));
                 border.dispose();
 
                 return new ImageIcon(out);
@@ -2128,6 +2172,5 @@ public class MenuAndOrderTable extends JFrame {
                                 "%03d",
                                 number);
         }
-
 
 }

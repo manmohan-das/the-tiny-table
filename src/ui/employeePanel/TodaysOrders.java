@@ -14,6 +14,7 @@ import java.util.*;
 
 import dao.PaymentDAO;
 import model.Payment;
+import dao.TaxSettingsDAO;
 
 public class TodaysOrders extends JPanel {
 
@@ -1119,11 +1120,14 @@ public class TodaysOrders extends JPanel {
             double oldDiscountRate = originalOrder.subtotal > 0
                     ? originalOrder.discount / originalOrder.subtotal
                     : 0.0;
+            double oldTaxable = originalOrder.subtotal - originalOrder.discount;
+            double oldTaxRate = oldTaxable > 0.005
+                    ? originalOrder.gst / oldTaxable
+                    : TaxSettingsDAO.getRate();
             double addedDiscount = addedSubtotal * oldDiscountRate;
-            double addedTax = (addedSubtotal - addedDiscount) * 0.12;
             double removedDiscount = removedSubtotal * oldDiscountRate;
-            double returnedTax = (removedSubtotal - removedDiscount) * 0.12;
-
+            double addedTax = (addedSubtotal - addedDiscount) * TaxSettingsDAO.getRate();
+            double returnedTax = (removedSubtotal - removedDiscount) * oldTaxRate;
             // Keep the original bill's tax intact. Tax is added for new items
             // and proportionally returned for items removed from that bill.
             order.subtotal = roundMoney(originalOrder.subtotal + addedSubtotal - removedSubtotal);
@@ -1164,6 +1168,10 @@ public class TodaysOrders extends JPanel {
     void recalculateOrder(MenuAndOrderTable.Order o) {
         double oldSubtotal = o.subtotal;
         double oldDiscount = o.discount;
+        double oldTaxable = oldSubtotal - oldDiscount;
+        double oldTaxRate = oldTaxable > 0.005
+                ? o.gst / oldTaxable
+                : TaxSettingsDAO.getRate();
         double rate = oldSubtotal > 0 ? oldDiscount / oldSubtotal : 0;
 
         double sub = 0;
@@ -1174,7 +1182,7 @@ public class TodaysOrders extends JPanel {
         o.subtotal = sub;
         o.discount = sub * rate;
         double taxable = sub - o.discount;
-        o.gst = taxable * .12;
+        o.gst = taxable * oldTaxRate;
         o.total = taxable + o.gst;
     }
 

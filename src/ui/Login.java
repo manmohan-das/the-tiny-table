@@ -10,12 +10,15 @@ import javax.swing.*;
 import javax.swing.GroupLayout.Group;
 import javax.swing.border.EmptyBorder;
 import java.sql.*;
+import dao.StoreProfileDAO;
+
+
 public class Login extends JFrame {
 
     final int IW = 1536, IH = 1024;
 
     Login() {
-        setTitle("The Tiny Table");
+        setTitle(StoreProfileDAO.loadProfile().getStoreName());
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         add(new MainPage());
@@ -808,7 +811,7 @@ public class Login extends JFrame {
                     ChefPage page = new ChefPage();
                     page.setVisible(true);
                 } else {
-                    ManagerDashboard page = new ManagerDashboard();
+                    ManagerDashboard page = new ManagerDashboard(authenticatedName);
                     page.setVisible(true);
                 }
 

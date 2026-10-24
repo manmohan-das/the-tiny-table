@@ -3,6 +3,8 @@ package employeePanel;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
+import dao.TaxSettingsDAO;
+import dao.StoreProfileDAO;
 
 /**
  * Dynamic Bill Preview for The Tiny Table.
@@ -63,7 +65,8 @@ public class BillPreview extends JPanel {
         JPanel billTop = new JPanel(new BorderLayout());
         billTop.setOpaque(false);
 
-        JLabel restaurant = new JLabel("THE TINY TABLE");
+        JLabel restaurant = new JLabel(
+        StoreProfileDAO.loadProfile().getStoreName().toUpperCase());
         restaurant.setFont(new Font("Serif", Font.BOLD, 28));
         restaurant.setForeground(MenuAndOrderTable.SIDE);
 
@@ -116,7 +119,10 @@ public class BillPreview extends JPanel {
         details.add(Box.createVerticalStrut(5));
         details.add(row("Subtotal", "₹ " + MenuAndOrderTable.money(order.subtotal), false));
         details.add(row("Discount", "-₹ " + MenuAndOrderTable.money(order.discount), false));
-        details.add(row("GST (12%)", "₹ " + MenuAndOrderTable.money(order.gst), false));
+        details.add(row(
+        TaxSettingsDAO.gstLabelForAmounts(order.subtotal, order.discount, order.gst),
+        "₹ " + MenuAndOrderTable.money(order.gst),
+        false));
         details.add(Box.createVerticalStrut(8));
         JSeparator sep = new JSeparator();
         sep.setForeground(MenuAndOrderTable.BORDER);

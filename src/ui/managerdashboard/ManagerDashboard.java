@@ -2,6 +2,8 @@ package managerdashboard;
 
 import dao.OrderDAO;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.*;
@@ -11,8 +13,11 @@ import managerdashboard.sidebarpages.Employees;
 import managerdashboard.sidebarpages.Orders;
 import managerdashboard.sidebarpages.Payments;
 import managerdashboard.sidebarpages.Sales;
+import managerdashboard.sidebarpages.Settings;
 import managerdashboard.sidebarpages.CategoryManagement;
 import model.Order;
+import dao.StoreProfileDAO;
+import java.beans.PropertyChangeListener;
 
 public class ManagerDashboard extends JFrame {
 
@@ -46,15 +51,41 @@ public class ManagerDashboard extends JFrame {
         private Employees employeesPage;
         private managerdashboard.sidebarpages.Menu menuPage;
         private Payments paymentsPage;
+        private Settings settingsPage;
         private OrderDAO orderDAO = new OrderDAO();
+
+        private final String managerName;
+        private String storeName;
+        private JLabel storeNameLogo;
+
+        private final PropertyChangeListener storeProfileListener = event -> {
+                if (!(event.getNewValue() instanceof StoreProfileDAO.Profile)) {
+                        return;
+                }
+
+                StoreProfileDAO.Profile profile = (StoreProfileDAO.Profile) event.getNewValue();
+
+                SwingUtilities.invokeLater(() -> {
+                        storeName = profile.getStoreName();
+                        setTitle(storeName + " - Manager Dashboard");
+
+                        if (storeNameLogo != null) {
+                                storeNameLogo.setText("🍃 " + storeName.toUpperCase());
+                        }
+                });
+        };
 
         // =====================================================
         // CONSTRUCTOR
         // =====================================================
 
-        public ManagerDashboard() {
+        public ManagerDashboard(String managerName) {
+                this.managerName = (managerName == null || managerName.trim().isEmpty())
+                                ? "Manager"
+                                : managerName.trim();
+                this.storeName = StoreProfileDAO.loadProfile().getStoreName();
 
-                setTitle("Tiny Table - Manager Dashboard");
+                setTitle(storeName + " - Manager Dashboard");
 
                 setSize(1600, 850);
 
@@ -73,6 +104,7 @@ public class ManagerDashboard extends JFrame {
                 employeesPage = new Employees();
                 menuPage = new managerdashboard.sidebarpages.Menu();
                 paymentsPage = new Payments();
+                settingsPage = new Settings();
 
                 // =================================================
                 // MAIN PANEL
@@ -114,6 +146,15 @@ public class ManagerDashboard extends JFrame {
                                 BorderLayout.CENTER);
 
                 add(mainPanel);
+
+                StoreProfileDAO.addProfileChangeListener(storeProfileListener);
+
+                addWindowListener(new WindowAdapter() {
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                                StoreProfileDAO.removeProfileChangeListener(storeProfileListener);
+                        }
+                });
         }
 
         // =====================================================
@@ -159,20 +200,19 @@ public class ManagerDashboard extends JFrame {
                                                 25,
                                                 15));
 
-                JLabel logo = new JLabel(
-                                "🍃  TINY TABLE");
+                storeNameLogo = new JLabel("🍃 " + storeName.toUpperCase());
 
-                logo.setFont(
+                storeNameLogo.setFont(
                                 new Font(
                                                 "Serif",
                                                 Font.BOLD,
-                                                25));
+                                                20));
 
-                logo.setForeground(
+                storeNameLogo.setForeground(
                                 new Color(92, 72, 45));
 
                 logoPanel.add(
-                                logo,
+                                storeNameLogo,
                                 BorderLayout.CENTER);
 
                 topPanel.add(logoPanel);
@@ -227,6 +267,9 @@ public class ManagerDashboard extends JFrame {
                 JButton paymentsBtn = createMenuButton(
                                 "💳  Payments");
 
+                JButton settingsBtn = createMenuButton(
+                                "⚙  Settings");
+
                 JButton categoryBtn = createMenuButton(
                                 "📂 Categories");
 
@@ -237,6 +280,7 @@ public class ManagerDashboard extends JFrame {
                 topPanel.add(ordersBtn);
                 topPanel.add(salesBtn);
                 topPanel.add(paymentsBtn);
+                topPanel.add(settingsBtn);
                 setActiveMenuButton(dashboardBtn);
 
                 // =================================================
@@ -255,13 +299,31 @@ public class ManagerDashboard extends JFrame {
                 JButton logoutBtn = createMenuButton(
                                 "🚪  Logout");
 
-                bottomPanel.add(
-                                Box.createVerticalStrut(6));
+                bottomPanel = new JPanel(new BorderLayout());
+                bottomPanel.setBackground(SIDEBAR);
 
-                bottomPanel.add(logoutBtn);
+                logoutBtn = createMenuButton("🚪  Logout");
 
-                bottomPanel.add(
-                                Box.createVerticalStrut(30));
+                JLabel managerNameLabel = new JLabel(managerName, SwingConstants.LEFT);
+                managerNameLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+                managerNameLabel.setForeground(TEXT);
+
+                JLabel managerRoleLabel = new JLabel("Manager", SwingConstants.LEFT);
+                managerRoleLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                managerRoleLabel.setForeground(MUTED);
+
+                JPanel managerInfoPanel = new JPanel(new GridLayout(2, 1));
+                managerInfoPanel.setBackground(SIDEBAR);
+                managerInfoPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 0));
+                managerInfoPanel.add(managerNameLabel);
+                managerInfoPanel.add(managerRoleLabel);
+                bottomPanel.add(managerInfoPanel, BorderLayout.NORTH);
+
+                JPanel logoutHolder = new JPanel(new BorderLayout());
+                logoutHolder.setOpaque(false);
+                logoutHolder.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
+                logoutHolder.add(logoutBtn, BorderLayout.CENTER);
+                bottomPanel.add(logoutHolder, BorderLayout.SOUTH);
 
                 sidebar.add(
                                 topPanel,
@@ -320,6 +382,11 @@ public class ManagerDashboard extends JFrame {
                 paymentsBtn.addActionListener(e -> {
                         setActiveMenuButton(paymentsBtn);
                         showPaymentsPage();
+                });
+
+                settingsBtn.addActionListener(e -> {
+                        setActiveMenuButton(settingsBtn);
+                        showSettingsPage();
                 });
 
                 // =================================================
@@ -712,239 +779,82 @@ public class ManagerDashboard extends JFrame {
 
                 bottomPanel.setOpaque(false);
 
-                // =================================================
-                // RECENT ORDERS
-                // =================================================
+                // TOP PERFORMING MENU ITEMS
+                JPanel topItemsPanel = createSectionPanel();
 
-                JPanel ordersPanel = createSectionPanel();
+                JLabel topItemsTitle = new JLabel("Top Performing Menu Items");
+                topItemsTitle.setFont(new Font("Serif", Font.BOLD, 19));
+                topItemsTitle.setForeground(TEXT);
+                topItemsPanel.add(topItemsTitle, BorderLayout.NORTH);
 
-                JPanel orderHeader = new JPanel(
-                                new BorderLayout());
+                List<Object[]> topItems = orderDAO.getTopSellingItems(10);
 
-                orderHeader.setOpaque(false);
+                JPanel itemRows = new JPanel();
+                itemRows.setOpaque(false);
+                itemRows.setLayout(new BoxLayout(itemRows, BoxLayout.Y_AXIS));
 
-                JLabel ordersTitle = new JLabel(
-                                "Recent Orders");
-
-                ordersTitle.setFont(
-                                new Font(
-                                                "Serif",
-                                                Font.BOLD,
-                                                19));
-
-                ordersTitle.setForeground(TEXT);
-
-                JLabel viewAll = new JLabel(
-                                "View All →");
-
-                viewAll.setFont(
-                                new Font(
-                                                "Arial",
-                                                Font.BOLD,
-                                                11));
-
-                viewAll.setForeground(MUTED);
-
-                orderHeader.add(
-                                ordersTitle,
-                                BorderLayout.WEST);
-
-                orderHeader.add(
-                                viewAll,
-                                BorderLayout.EAST);
-
-                ordersPanel.add(
-                                orderHeader,
-                                BorderLayout.NORTH);
-
-                // =================================================
-                // ORDER TABLE
-                // =================================================
-
-                String[] columns = {
-                                "Order ID",
-                                "Customer",
-                                "Items",
-                                "Amount",
-                                "Status"
-                };
-
-                List<Order> orders = orderDAO.getRecentOrders(5);
-
-                Object[][] data = new Object[orders.size()][5];
-
-                for (int i = 0; i < orders.size(); i++) {
-
-                        Order order = orders.get(i);
-
-                        data[i][0] = "#" + order.getOrderId();
-                        data[i][1] = order.getCustomerName();
-                        data[i][2] = orderDAO.getItemCountByOrderId(order.getOrderId());
-                        data[i][3] = "₹" + order.getTotalAmount().toPlainString();
-                        data[i][4] = order.getStatus();
+                int maxSold = 1;
+                for (Object[] item : topItems) {
+                        maxSold = Math.max(maxSold, ((Number) item[1]).intValue());
                 }
 
-                DefaultTableModel model = new DefaultTableModel(
-                                data,
-                                columns) {
+                if (topItems.isEmpty()) {
+                        JLabel emptyLabel = new JLabel("No item sales data yet.");
+                        emptyLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+                        emptyLabel.setForeground(MUTED);
+                        itemRows.add(emptyLabel);
+                } else {
+                        for (int index = 0; index < topItems.size(); index++) {
+                                Object[] item = topItems.get(index);
+                                String itemName = String.valueOf(item[0]);
+                                int sold = ((Number) item[1]).intValue();
 
-                        @Override
-                        public boolean isCellEditable(
-                                        int row,
-                                        int column) {
+                                JPanel itemHeader = new JPanel(new BorderLayout());
+                                itemHeader.setOpaque(false);
 
-                                return false;
+                                JLabel nameLabel = new JLabel(itemName);
+                                nameLabel.setFont(new Font("Arial", Font.BOLD, 13));
+                                nameLabel.setForeground(TEXT);
+
+                                JLabel soldLabel = new JLabel(sold + " sold", SwingConstants.RIGHT);
+                                soldLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+                                soldLabel.setForeground(MUTED);
+
+                                itemHeader.add(nameLabel, BorderLayout.WEST);
+                                itemHeader.add(soldLabel, BorderLayout.EAST);
+
+                                JProgressBar bar = new JProgressBar(0, maxSold);
+                                bar.setValue(sold);
+                                bar.setPreferredSize(new Dimension(0, 14));
+                                bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 14));
+                                bar.setForeground(SIDEBAR_ACCENT);
+                                bar.setBackground(new Color(235, 226, 207));
+                                bar.setOpaque(true);
+                                bar.setBorder(BorderFactory.createLineBorder(BORDER));
+                                bar.setBorderPainted(true);
+                                bar.setStringPainted(false);
+
+                                JPanel itemRow = new JPanel(new BorderLayout(0, 6));
+                                itemRow.setOpaque(false);
+                                itemRow.add(itemHeader, BorderLayout.NORTH);
+                                itemRow.add(bar, BorderLayout.CENTER);
+                                itemRow.setBorder(BorderFactory.createEmptyBorder(7, 0, 7, 0));
+                                itemRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+
+                                itemRows.add(itemRow);
+                                if (index < topItems.size() - 1) {
+                                        itemRows.add(Box.createVerticalGlue());
+                                }
                         }
-                };
+                }
 
-                JTable table = new JTable(model);
+                JScrollPane itemsScrollPane = new JScrollPane(itemRows);
+                itemsScrollPane.setBorder(BorderFactory.createEmptyBorder());
+                itemsScrollPane.setHorizontalScrollBarPolicy(
+                                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                itemsScrollPane.getViewport().setBackground(TABLE_CREAM);
 
-                // =================================================
-                // TABLE DESIGN
-                // =================================================
-
-                table.setRowHeight(30);
-
-                table.setFont(
-                                new Font(
-                                                "Arial",
-                                                Font.PLAIN,
-                                                14));
-
-                table.setForeground(TEXT);
-
-                table.setBackground(
-                                TABLE_CREAM);
-
-                table.setGridColor(BORDER);
-
-                table.setSelectionBackground(
-                                TABLE_SELECTED);
-
-                table.setSelectionForeground(
-                                TEXT);
-
-                table.setShowHorizontalLines(true);
-
-                table.setShowVerticalLines(false);
-
-                table.setIntercellSpacing(
-                                new Dimension(
-                                                0,
-                                                1));
-
-                table.setFillsViewportHeight(true);
-
-                // =================================================
-                // TABLE HEADER
-                // =================================================
-
-                table.getTableHeader().setFont(
-                                new Font(
-                                                "Arial",
-                                                Font.BOLD,
-                                                13));
-
-                table.getTableHeader().setBackground(
-                                LIGHT_CREAM);
-
-                table.getTableHeader().setForeground(
-                                TEXT);
-
-                table.getTableHeader().setPreferredSize(
-                                new Dimension(
-                                                0,
-                                                35));
-
-                // =================================================
-                // TABLE ROWS
-                // =================================================
-
-                table.setDefaultRenderer(
-                                Object.class,
-                                new DefaultTableCellRenderer() {
-
-                                        @Override
-                                        public Component getTableCellRendererComponent(
-                                                        JTable table,
-                                                        Object value,
-                                                        boolean isSelected,
-                                                        boolean hasFocus,
-                                                        int row,
-                                                        int column) {
-
-                                                Component c = super.getTableCellRendererComponent(
-                                                                table,
-                                                                value,
-                                                                isSelected,
-                                                                hasFocus,
-                                                                row,
-                                                                column);
-
-                                                if (!isSelected) {
-
-                                                        c.setBackground(
-                                                                        TABLE_CREAM);
-
-                                                        c.setForeground(TEXT);
-
-                                                } else {
-
-                                                        c.setBackground(
-                                                                        TABLE_SELECTED);
-
-                                                        c.setForeground(TEXT);
-                                                }
-
-                                                return c;
-                                        }
-                                });
-
-                // =================================================
-                // CENTER ALIGNMENT
-                // =================================================
-
-                DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-
-                centerRenderer.setHorizontalAlignment(
-                                SwingConstants.CENTER);
-
-                table.getColumnModel()
-                                .getColumn(0)
-                                .setCellRenderer(
-                                                centerRenderer);
-
-                table.getColumnModel()
-                                .getColumn(2)
-                                .setCellRenderer(
-                                                centerRenderer);
-
-                table.getColumnModel()
-                                .getColumn(3)
-                                .setCellRenderer(
-                                                centerRenderer);
-
-                table.getColumnModel()
-                                .getColumn(4)
-                                .setCellRenderer(
-                                                new StatusRenderer());
-
-                // =================================================
-                // SCROLL PANE
-                // =================================================
-
-                JScrollPane scrollPane = new JScrollPane(table);
-
-                scrollPane.setBorder(
-                                BorderFactory.createEmptyBorder());
-
-                scrollPane.getViewport()
-                                .setBackground(
-                                                TABLE_CREAM);
-
-                ordersPanel.add(
-                                scrollPane,
-                                BorderLayout.CENTER);
+                topItemsPanel.add(itemsScrollPane, BorderLayout.CENTER);
 
                 // =================================================
                 // WEEKLY SALES
@@ -993,7 +903,7 @@ public class ManagerDashboard extends JFrame {
                                         return;
                                 }
 
-                                int left = 40;
+                                int left = 88;
                                 int right = width - 20;
                                 int top = 20;
                                 int bottom = height - 30;
@@ -1045,6 +955,35 @@ public class ManagerDashboard extends JFrame {
                                 };
 
                                 max = Math.max(max, 1);
+                                double rawStep = Math.max(1.0, max / 4.0);
+                                double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                                double normalizedStep = rawStep / magnitude;
+
+                                double multiplier;
+                                if (normalizedStep <= 1) {
+                                        multiplier = 1;
+                                } else if (normalizedStep <= 2) {
+                                        multiplier = 2;
+                                } else if (normalizedStep <= 5) {
+                                        multiplier = 5;
+                                } else {
+                                        multiplier = 10;
+                                }
+
+                                int step = (int) Math.ceil(multiplier * magnitude);
+                                int axisMax = step * 4;
+                                g2.setColor(TEXT);
+                                g2.setFont(new Font("Arial", Font.PLAIN, 10));
+                                FontMetrics metrics = g2.getFontMetrics();
+
+                                for (int i = 0; i <= 4; i++) {
+                                        int y = top + i * (bottom - top) / 4;
+                                        int amount = axisMax - i * step;
+                                        String label = String.format("₹%,d", amount);
+                                        int baseline = y + (metrics.getAscent() - metrics.getDescent()) / 2;
+
+                                        g2.drawString(label, left - metrics.stringWidth(label) - 8, baseline);
+                                }
 
                                 // =================================================
                                 // SALES LINE
@@ -1066,7 +1005,7 @@ public class ManagerDashboard extends JFrame {
                                         int y1 = bottom -
                                                         sales[i] *
                                                                         (bottom - top)
-                                                                        / max;
+                                                                        / axisMax;
 
                                         int x2 = left +
                                                         (i + 1) *
@@ -1076,7 +1015,7 @@ public class ManagerDashboard extends JFrame {
                                         int y2 = bottom -
                                                         sales[i + 1] *
                                                                         (bottom - top)
-                                                                        / max;
+                                                                        / axisMax;
 
                                         g2.drawLine(
                                                         x1,
@@ -1100,7 +1039,7 @@ public class ManagerDashboard extends JFrame {
                                 int lastY = bottom -
                                                 sales[6] *
                                                                 (bottom - top)
-                                                                / max;
+                                                                / axisMax;
 
                                 g2.fillOval(
                                                 lastX - 4,
@@ -1146,8 +1085,7 @@ public class ManagerDashboard extends JFrame {
                 // ADD BOTTOM PANELS
                 // =================================================
 
-                bottomPanel.add(
-                                ordersPanel);
+                bottomPanel.add(topItemsPanel);
 
                 bottomPanel.add(
                                 salesPanel);
@@ -1449,6 +1387,17 @@ public class ManagerDashboard extends JFrame {
                                 paymentsPage,
                                 BorderLayout.CENTER);
 
+                contentPanel.revalidate();
+                contentPanel.repaint();
+        }
+
+        // =====================================================
+        // SETTING PAGE
+        // =====================================================
+
+        public void showSettingsPage() {
+                contentPanel.removeAll();
+                contentPanel.add(settingsPage, BorderLayout.CENTER);
                 contentPanel.revalidate();
                 contentPanel.repaint();
         }

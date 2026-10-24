@@ -209,6 +209,38 @@ public class OrderDAO {
         return 0;
     }
 
+    // get top selling items
+    public List<Object[]> getTopSellingItems(int limit) {
+        List<Object[]> items = new ArrayList<>();
+
+        String sql = "SELECT f.food_name, SUM(oi.quantity) AS quantity_sold " +
+                "FROM order_items oi " +
+                "JOIN food_items f ON f.food_id = oi.food_id " +
+                "JOIN orders o ON o.order_id = oi.order_id " +
+                "WHERE UPPER(COALESCE(o.status, '')) <> 'CANCELLED' " +
+                "GROUP BY f.food_id, f.food_name " +
+                "ORDER BY quantity_sold DESC, f.food_name ASC " +
+                "LIMIT ?";
+
+        try (Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    items.add(new Object[] {
+                            rs.getString("food_name"),
+                            rs.getInt("quantity_sold")
+                    });
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return items;
+    }
+
     // 12. LAST 7 DAYS SALES - MONDAY TO SUNDAY
     public BigDecimal[] getWeeklySales() {
         BigDecimal[] sales = new BigDecimal[7];

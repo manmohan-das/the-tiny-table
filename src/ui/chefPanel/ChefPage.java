@@ -10,70 +10,9 @@ import java.sql.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import dao.StoreProfileDAO;
 
-/**
- * ============================================================
- * THE TINY TABLE
- * CHEF PANEL
- * ============================================================
- *
- * Chef Panel Rules:
- *
- * 1. Shows today's orders only.
- * 2. Orders are displayed in FIFO / Order ID order.
- * 3. First 3 pending orders are shown with full details.
- * 4. Remaining orders are shown in the left waiting list.
- * 5. Any of the 3 active orders can be completed.
- * 6. After any active order is completed, the next
- * pending order by Order ID moves into the active 3.
- * 7. Active and waiting orders remain sorted by Order ID.
- *
- * 7. Payment information is NOT shown.
- * 8. Chef only sees:
- * - Order ID
- * - Time
- * - customer_name name
- * - Mobile number
- * - Food items
- * - Quantity
- * - note
- *
- * 9. Uses the existing MySQL DBConnection class.
- *
- * DATABASE:
- *
- * orders
- * order_id
- * employee_id
- * customer_name
- * customer_phone
- * order_date
- * subtotal
- * discount
- * tax
- * total_amount
- * status
- * note
- *
- * order_items
- * order_item_id
- * order_id
- * food_id
- * quantity
- * price
- * subtotal
- *
- * food_items
- * food_id
- * category_id
- * food_name
- * price
- * image
- * available
- * available_qty
- *
- * ============================================================
- */
+
 
 public class ChefPage extends JFrame {
 
@@ -129,8 +68,10 @@ public class ChefPage extends JFrame {
 
         public ChefPage() {
 
+                String storeName = StoreProfileDAO.loadProfile().getStoreName();
+
                 setTitle(
-                                "The Tiny Table - Chef Panel");
+                                storeName + " - Chef Panel");
 
                 setDefaultCloseOperation(
                                 JFrame.DISPOSE_ON_CLOSE);
@@ -146,9 +87,7 @@ public class ChefPage extends JFrame {
                 getContentPane()
                                 .setBackground(BG);
 
-                add(
-                                createHeader(),
-                                BorderLayout.NORTH);
+                add(createHeader(storeName), BorderLayout.NORTH);
 
                 add(
                                 createMainContent(),
@@ -167,7 +106,7 @@ public class ChefPage extends JFrame {
         // HEADER
         // ========================================================
 
-        private JPanel createHeader() {
+        private JPanel createHeader(String storeName) {
 
                 JPanel header = new JPanel(
                                 new BorderLayout());
@@ -200,7 +139,7 @@ public class ChefPage extends JFrame {
                 logoPanel.setOpaque(false);
 
                 JLabel title = new JLabel(
-                                "The Tiny Table");
+                                storeName);
 
                 title.setFont(
                                 new Font(
