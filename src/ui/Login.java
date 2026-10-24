@@ -261,6 +261,8 @@ public class Login extends JFrame {
             loginButton.addActionListener(e ->
                 checkLogin()
             );
+            username.addActionListener(e -> checkLogin());
+            password.addActionListener(e -> checkLogin());
 
             forgot.setCursor(
                 Cursor.getPredefinedCursor(
@@ -668,10 +670,12 @@ public class Login extends JFrame {
                 return;
             }
 
-            if (role.equals("Manager"))
-                managerOTP();
-            else
-                success();
+            // ENABLE IT WHEN OTP API GETS INTEGRATED 
+            // if (role.equals("Manager"))
+            //     managerOTP();
+            // else
+            //     success();
+            success();
         }
 
         void error(String text) {
@@ -766,6 +770,7 @@ public class Login extends JFrame {
                 d.dispose();
                 openRolePage();
             });
+            d.getRootPane().setDefaultButton(ok);
 
             p.add(
                 check,
@@ -797,7 +802,7 @@ public class Login extends JFrame {
         void openRolePage() {
             try {
                 if (role.equals("Employee")) {
-                    MenuAndOrderTable page = new MenuAndOrderTable();
+                    MenuAndOrderTable page = new MenuAndOrderTable(authenticatedName);
                     page.setVisible(true);
                 } else if (role.equals("Chef")) {
                     ChefPage page = new ChefPage();

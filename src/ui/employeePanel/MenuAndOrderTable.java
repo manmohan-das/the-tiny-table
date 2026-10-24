@@ -29,7 +29,7 @@ public class MenuAndOrderTable extends JFrame {
         static final Color SIDE = Color.decode("#0F3D26");
 
         // ================= USER =================
-        String employee = "Rohit Kumar";
+        String employee;
 
         // ================= STATE =================
         String category = "All";
@@ -112,7 +112,11 @@ public class MenuAndOrderTable extends JFrame {
         }
 
         // ================= CONSTRUCTOR =================
-        public MenuAndOrderTable() {
+        public MenuAndOrderTable(String employeeName) {
+
+                employee = (employeeName == null || employeeName.trim().isEmpty())
+                ? "Employee"
+                : employeeName.trim();
 
                 setTitle("The Tiny Table");
 
@@ -130,7 +134,7 @@ public class MenuAndOrderTable extends JFrame {
                 add(createHeader(), BorderLayout.NORTH);
                 add(createMain(), BorderLayout.CENTER);
 
-                setSize(1450, 820);
+                setSize(1530, 820);
                 setLocationRelativeTo(null);
 
                 loadFoodFromDatabase();
@@ -1043,7 +1047,7 @@ public class MenuAndOrderTable extends JFrame {
                         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 78));
                         row.setBorder(new CompoundBorder(
                                         new MatteBorder(0, 0, 1, 0, BORDER),
-                                        new EmptyBorder(8, 2, 8, 2)));
+                                        new EmptyBorder(8, 2, 8, 24)));
 
                         JLabel image = new JLabel();
                         image.setPreferredSize(new Dimension(56, 56));
@@ -1484,6 +1488,17 @@ public class MenuAndOrderTable extends JFrame {
                                         (size - fm.getHeight()) / 2 + fm.getAscent());
                 }
                 g.dispose();
+
+                Graphics2D border = out.createGraphics();
+                border.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                border.setColor(GREEN);
+                border.setStroke(new BasicStroke(2f));
+                border.draw(new java.awt.geom.Ellipse2D.Float(
+                        1.5f, 1.5f, size - 3f, size - 3f));
+                border.dispose();
+
                 return new ImageIcon(out);
         }
 

@@ -5,11 +5,15 @@ import javax.swing.border.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import dao.PaymentDAO;
+import model.Payment;
 
 public class TodaysOrders extends JPanel {
 
@@ -190,16 +194,14 @@ public class TodaysOrders extends JPanel {
                 view.addActionListener(e -> orderDetail(o, billPage));
                 actions.add(view);
 
-                if (!billPage) {
+                if (!billPage && isOrderEditable(status)) {
                     JButton edit = actionButton("Edit", MenuAndOrderTable.TEXT);
                     edit.addActionListener(e -> editOrder(o));
                     actions.add(edit);
 
-                    if (!"Completed".equals(status) && !"Cancelled".equals(status)) {
-                        JButton cancel = actionButton("Cancel", MenuAndOrderTable.RED);
-                        cancel.addActionListener(e -> cancelOrder(o));
-                        actions.add(cancel);
-                    }
+                    JButton cancel = actionButton("Cancel", MenuAndOrderTable.RED);
+                    cancel.addActionListener(e -> cancelOrder(o));
+                    actions.add(cancel);
                 }
 
                 row.add(actions);
@@ -346,7 +348,7 @@ public class TodaysOrders extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 7, 0));
         actions.setOpaque(false);
 
-        if (!billPage) {
+        if (!billPage && isOrderEditable(o.status)) {
             JComboBox<String> statusBox = new JComboBox<>(
                     new String[] { "Pending", "Preparing", "Ready", "Completed" });
             statusBox.setSelectedItem(dbStatus(o.status));
@@ -368,15 +370,17 @@ public class TodaysOrders extends JPanel {
             });
             actions.add(edit);
 
-            if (!"Completed".equals(dbStatus(o.status))) {
-                JButton cancel = redButton("\u2715  Cancel Order");
-                cancel.addActionListener(e -> {
-                    dialog.dispose();
-                    cancelOrder(o);
-                });
-                actions.add(cancel);
-            }
-        } else {
+            JButton cancel = redButton("\u2715  Cancel Order");
+            cancel.addActionListener(e -> {
+                dialog.dispose();
+                cancelOrder(o);
+            });
+            actions.add(cancel);
+        } else if (!billPage && "Cancelled".equals(dbStatus(o.status))) {
+            JButton retrieve = greenButton("Retrieve Order");
+            retrieve.addActionListener(e -> retrieveOrder(o, dialog));
+            actions.add(retrieve);
+        } else if (billPage) {
             JButton print = greenButton("\uD83D\uDDA8  Print Bill");
             print.addActionListener(e -> app.printBill(o));
             actions.add(print);
@@ -389,6 +393,24 @@ public class TodaysOrders extends JPanel {
         root.add(actions, BorderLayout.SOUTH);
         dialog.setContentPane(root);
         dialog.setVisible(true);
+    }
+
+    private void retrieveOrder(MenuAndOrderTable.Order o, JDialog dialog) {
+        if (!"Cancelled".equals(dbStatus(o.status)))
+            return;
+
+        String message = "Retrieve order " + MenuAndOrderTable.formatOrder(o.number)
+                + " and restore it to Pending?";
+        int result = JOptionPane.showConfirmDialog(
+                app, message, "Retrieve Order", JOptionPane.YES_NO_OPTION);
+
+        if (result != JOptionPane.YES_OPTION)
+            return;
+
+        o.status = "Pending";
+        updateStatusDirectly(o);
+        dialog.dispose();
+        refreshPage();
     }
 
     private void updateStatusDirectly(MenuAndOrderTable.Order o) {
@@ -603,13 +625,97 @@ public class TodaysOrders extends JPanel {
         d.setVisible(true);
 
         if (d.saved) {
-            // Reload this page directly from MySQL so all employees' orders remain visible.
-            refreshPage();
+            app.replaceCenter(new OrderPreview(
+                    app,
+                    d.order,
+                    o,
+                    d.paidBeforeEdit,
+                    method -> saveEditedOrder(o, d.order, d.originalPayment, d.paidBeforeEdit, method)));
         }
     }
 
+    private void saveEditedOrder(
+            MenuAndOrderTable.Order originalOrder,
+            MenuAndOrderTable.Order editedOrder,
+            Payment originalPayment,
+            double paidBeforeEdit,
+            String selectedMethod) {
+        double additionalAmount = Math.max(0.0, editedOrder.total - paidBeforeEdit);
+        double refundAmount = Math.max(0.0, paidBeforeEdit - editedOrder.total);
+        editedOrder.paymentMethod = toDbPaymentMethod(selectedMethod);
+
+        if (!dao.EmployeePanelDAO.updateOrderAndItemsFull(editedOrder)) {
+            app.showMessage("Edit Order", "Could not save the updated order to the database.");
+            return;
+        }
+
+        if ((additionalAmount > 0.005 || refundAmount > 0.005)
+                && !savePaymentAdjustment(editedOrder, originalPayment)) {
+            boolean restored = dao.EmployeePanelDAO.updateOrderAndItemsFull(originalOrder);
+            app.showMessage("Payment Save Failed",
+                    restored
+                            ? "Payment could not be saved. The order changes were rolled back. Please try again."
+                            : "Payment could not be saved, and the old order could not be restored. Please ask a manager to check order #"
+                                    + MenuAndOrderTable.formatOrder(editedOrder.number) + ".");
+            return;
+        }
+
+        copyOrderValues(editedOrder, originalOrder);
+        app.showBillPreview(originalOrder);
+    }
+
+    private boolean savePaymentAdjustment(
+            MenuAndOrderTable.Order order,
+            Payment existingPayment) {
+        PaymentDAO paymentDAO = new PaymentDAO();
+        String method = toDbPaymentMethod(order.paymentMethod);
+
+        if (existingPayment == null) {
+            if (order.total <= 0.005) return true;
+            Payment payment = new Payment();
+            payment.setOrderId(order.number);
+            payment.setAmount(java.math.BigDecimal.valueOf(order.total));
+            payment.setPaymentMethod(method);
+            payment.setPaymentStatus("Paid");
+            payment.setPaymentDate(new java.sql.Timestamp(System.currentTimeMillis()));
+            return paymentDAO.addPayment(payment);
+        }
+
+        existingPayment.setAmount(java.math.BigDecimal.valueOf(Math.max(0.0, order.total)));
+        existingPayment.setPaymentMethod(method);
+        existingPayment.setPaymentStatus(order.total <= 0.005 ? "Refunded" : "Paid");
+        existingPayment.setPaymentDate(new java.sql.Timestamp(System.currentTimeMillis()));
+        return paymentDAO.updatePayment(existingPayment);
+    }
+
+    private static String toDbPaymentMethod(String method) {
+        if (method == null) return "Cash";
+        if ("CASH".equalsIgnoreCase(method)) return "Cash";
+        if ("UPI".equalsIgnoreCase(method)) return "UPI";
+        if ("CARD".equalsIgnoreCase(method)) return "Card";
+        return method;
+    }
+
+    private static void copyOrderValues(
+            MenuAndOrderTable.Order source,
+            MenuAndOrderTable.Order target) {
+        target.customer = source.customer;
+        target.phone = source.phone;
+        target.items = new LinkedHashMap<>(source.items);
+        target.subtotal = source.subtotal;
+        target.discount = source.discount;
+        target.gst = source.gst;
+        target.total = source.total;
+        target.notes = source.notes;
+        target.paymentMethod = source.paymentMethod;
+        target.status = source.status;
+    }
+
     class EditDialog extends JDialog {
+        private final MenuAndOrderTable.Order originalOrder;
         MenuAndOrderTable.Order order;
+        private final Payment originalPayment;
+        private final double paidBeforeEdit;
         JTextField customer = new JTextField();
         JTextField phone = new JTextField();
         JPanel itemsPanel = new JPanel();
@@ -617,7 +723,22 @@ public class TodaysOrders extends JPanel {
 
         EditDialog(MenuAndOrderTable.Order o) {
             super(app, "Edit Order " + MenuAndOrderTable.formatOrder(o.number), true);
-            order = o;
+            originalOrder = o;
+            order = copyOrder(o);
+
+            // The current schema stores one cumulative payment row per order.
+            originalPayment = new PaymentDAO().getPaymentByOrderId(o.number);
+            paidBeforeEdit = originalPayment != null
+                    && "Paid".equalsIgnoreCase(originalPayment.getPaymentStatus())
+                            && originalPayment.getAmount() != null
+                    ? originalPayment.getAmount().doubleValue()
+                    : 0.0;
+            if (originalPayment != null
+                    && originalPayment.getPaymentMethod() != null
+                    && !originalPayment.getPaymentMethod().trim().isEmpty()) {
+                order.paymentMethod = originalPayment.getPaymentMethod();
+            }
+
             setSize(620, 610);
             setLocationRelativeTo(app);
 
@@ -783,26 +904,30 @@ public class TodaysOrders extends JPanel {
             JButton minus = new MenuAndOrderTable.CartButton("\u2212");
             JButton qty = new MenuAndOrderTable.CartButton(String.valueOf(q));
             JButton plus = new MenuAndOrderTable.CartButton("+");
-            JButton remove = actionButton("Remove", MenuAndOrderTable.RED);
+            JButton remove = actionButton("✕ Remove", MenuAndOrderTable.RED);
+            remove.setFont(new Font("SansSerif", Font.BOLD, 11));
+            remove.setBorder(new EmptyBorder(7, 11, 7, 11));
+            remove.setPreferredSize(new Dimension(90, 34));
 
             minus.addActionListener(ev -> {
-                if (q <= 1)
+                int current = order.items.getOrDefault(f, 0);
+                if (current <= 1)
                     order.items.remove(f);
                 else
-                    order.items.put(f, q - 1);
-                recalculateOrder(order);
+                    order.items.put(f, current - 1);
+                recalculateEditedOrder();
                 refreshEditItems();
             });
 
             plus.addActionListener(ev -> {
-                order.items.put(f, q + 1);
-                recalculateOrder(order);
+                order.items.put(f, order.items.getOrDefault(f, 0) + 1);
+                recalculateEditedOrder();
                 refreshEditItems();
             });
 
             remove.addActionListener(ev -> {
                 order.items.remove(f);
-                recalculateOrder(order);
+                recalculateEditedOrder();
                 refreshEditItems();
             });
 
@@ -910,7 +1035,7 @@ public class TodaysOrders extends JPanel {
                 public void mouseClicked(MouseEvent e) {
                     if (order.items.getOrDefault(f, 0) == 0) {
                         order.items.put(f, 1);
-                        recalculateOrder(order);
+                        recalculateEditedOrder();
                         refreshEditItems();
                     }
                 }
@@ -933,14 +1058,13 @@ public class TodaysOrders extends JPanel {
                 JButton minus = new MenuAndOrderTable.CartButton("\u2212");
                 JButton qty = new MenuAndOrderTable.CartButton(String.valueOf(q));
                 JButton plus = new MenuAndOrderTable.CartButton("+");
-
                 minus.addActionListener(e -> {
                     int current = order.items.getOrDefault(f, 0);
                     if (current <= 1)
                         order.items.remove(f);
                     else
                         order.items.put(f, current - 1);
-                    recalculateOrder(order);
+                    recalculateEditedOrder();
                     refreshEditItems();
                     rebuildAddItemControls(controls, f);
                 });
@@ -948,7 +1072,7 @@ public class TodaysOrders extends JPanel {
                 plus.addActionListener(e -> {
                     int current = order.items.getOrDefault(f, 0);
                     order.items.put(f, current + 1);
-                    recalculateOrder(order);
+                    recalculateEditedOrder();
                     refreshEditItems();
                     rebuildAddItemControls(controls, f);
                 });
@@ -961,7 +1085,7 @@ public class TodaysOrders extends JPanel {
                 select.setFont(new Font("SansSerif", Font.BOLD, 12));
                 select.addActionListener(e -> {
                     order.items.put(f, 1);
-                    recalculateOrder(order);
+                    recalculateEditedOrder();
                     refreshEditItems();
                     rebuildAddItemControls(controls, f);
                 });
@@ -973,24 +1097,64 @@ public class TodaysOrders extends JPanel {
         }
 
         void saveEdit() {
-            if (order.items.isEmpty()) {
-                app.showMessage("Edit Order",
-                        "Order must contain at least one item.");
-                return;
-            }
-
-            recalculateOrder(order);
-
-            // Header + order_items are both persisted in MySQL.
-            if (!updateOrderAndItems(order)) {
-                app.showMessage("Edit Order",
-                        "Could not save order changes to the database.");
-                return;
-            }
-
+            recalculateEditedOrder();
             saved = true;
             dispose();
         }
+
+        private void recalculateEditedOrder() {
+            double addedSubtotal = 0.0;
+            double removedSubtotal = 0.0;
+            for (Map.Entry<MenuAndOrderTable.Food, Integer> entry : order.items.entrySet()) {
+                int oldQuantity = originalOrder.items.getOrDefault(entry.getKey(), 0);
+                int addedQuantity = Math.max(0, entry.getValue() - oldQuantity);
+                addedSubtotal += entry.getKey().price * addedQuantity;
+            }
+            for (Map.Entry<MenuAndOrderTable.Food, Integer> entry : originalOrder.items.entrySet()) {
+                int newQuantity = order.items.getOrDefault(entry.getKey(), 0);
+                int removedQuantity = Math.max(0, entry.getValue() - newQuantity);
+                removedSubtotal += entry.getKey().price * removedQuantity;
+            }
+
+            double oldDiscountRate = originalOrder.subtotal > 0
+                    ? originalOrder.discount / originalOrder.subtotal
+                    : 0.0;
+            double addedDiscount = addedSubtotal * oldDiscountRate;
+            double addedTax = (addedSubtotal - addedDiscount) * 0.12;
+            double removedDiscount = removedSubtotal * oldDiscountRate;
+            double returnedTax = (removedSubtotal - removedDiscount) * 0.12;
+
+            // Keep the original bill's tax intact. Tax is added for new items
+            // and proportionally returned for items removed from that bill.
+            order.subtotal = roundMoney(originalOrder.subtotal + addedSubtotal - removedSubtotal);
+            order.discount = roundMoney(originalOrder.discount + addedDiscount - removedDiscount);
+            order.gst = roundMoney(originalOrder.gst + addedTax - returnedTax);
+            order.total = roundMoney(originalOrder.total
+                    + addedSubtotal - addedDiscount + addedTax
+                    - removedSubtotal + removedDiscount - returnedTax);
+        }
+
+        private double roundMoney(double amount) {
+            return Math.round(amount * 100.0) / 100.0;
+        }
+    }
+
+    private static MenuAndOrderTable.Order copyOrder(MenuAndOrderTable.Order source) {
+        MenuAndOrderTable.Order copy = new MenuAndOrderTable.Order(
+                source.number,
+                source.employee,
+                source.customer,
+                source.phone,
+                new LinkedHashMap<>(source.items),
+                source.subtotal,
+                source.discount,
+                source.gst,
+                source.total,
+                source.notes,
+                source.createdAt);
+        copy.paymentMethod = source.paymentMethod;
+        copy.status = source.status;
+        return copy;
     }
 
     private boolean updateOrderAndItems(MenuAndOrderTable.Order o) {
@@ -1034,12 +1198,26 @@ public class TodaysOrders extends JPanel {
 
     JButton plainButton(String text) {
         JButton b = new MenuAndOrderTable.RoundedButton(text);
-        b.setFont(new Font("Serif", Font.BOLD, 13));
+        b.setFont(new Font("SansSerif", Font.BOLD, 13));
         b.setForeground(MenuAndOrderTable.TEXT);
         b.setBackground(MenuAndOrderTable.SURFACE);
         b.setFocusPainted(false);
         b.setOpaque(false);
         b.setBorder(new LineBorder(MenuAndOrderTable.BORDER, 1, true));
+        b.setPreferredSize(new Dimension(96, 40));
+        b.setMinimumSize(new Dimension(96, 40));
+        b.setHorizontalAlignment(SwingConstants.CENTER);
+        b.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (b.isEnabled()) b.setBackground(MenuAndOrderTable.MUTED);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                b.setBackground(MenuAndOrderTable.SURFACE);
+            }
+        });
         return b;
     }
 
@@ -1061,6 +1239,11 @@ public class TodaysOrders extends JPanel {
         if (status.equalsIgnoreCase("CANCELLED"))
             return "Cancelled";
         return status;
+    }
+
+    private static boolean isOrderEditable(String status) {
+        String normalized = dbStatus(status);
+        return !"Completed".equals(normalized) && !"Cancelled".equals(normalized);
     }
 
     private static boolean isStatus(String s) {
