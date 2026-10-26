@@ -18,10 +18,9 @@ public class FoodItemDAO {
         String sql = "SELECT * FROM food_items ORDER BY food_id";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
 
@@ -30,6 +29,10 @@ public class FoodItemDAO {
                 food.setFoodId(rs.getInt("food_id"));
                 food.setCategoryId(rs.getInt("category_id"));
                 food.setFoodName(rs.getString("food_name"));
+
+                // ADD THIS LINE
+                food.setFoodType(rs.getString("food_type"));
+
                 food.setPrice(rs.getBigDecimal("price"));
                 food.setImage(rs.getString("image"));
                 food.setAvailable(rs.getInt("available"));
@@ -45,16 +48,14 @@ public class FoodItemDAO {
         return foodItems;
     }
 
-
     // 2. GET FOOD ITEM BY ID
     public FoodItem getFoodItemById(int foodId) {
 
         String sql = "SELECT * FROM food_items WHERE food_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, foodId);
 
@@ -63,14 +64,14 @@ public class FoodItemDAO {
             if (rs.next()) {
 
                 FoodItem food = new FoodItem();
-
                 food.setFoodId(rs.getInt("food_id"));
                 food.setCategoryId(rs.getInt("category_id"));
                 food.setFoodName(rs.getString("food_name"));
+
+                // ADD THIS LINE
+                food.setFoodType(rs.getString("food_type"));
+
                 food.setPrice(rs.getBigDecimal("price"));
-                food.setImage(rs.getString("image"));
-                food.setAvailable(rs.getInt("available"));
-                food.setAvailableQty(rs.getInt("available_qty"));
 
                 return food;
             }
@@ -82,25 +83,23 @@ public class FoodItemDAO {
         return null;
     }
 
-
     // 3. ADD FOOD ITEM
     public boolean addFoodItem(FoodItem food) {
 
         String sql = "INSERT INTO food_items " +
-                     "(category_id, food_name, price, image, available, available_qty) " +
-                     "VALUES (?, ?, ?, ?, ?, ?)";
-
+                "(category_id, food_name, food_type, price, image, available, available_qty) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, food.getCategoryId());
             ps.setString(2, food.getFoodName());
-            ps.setBigDecimal(3, food.getPrice());
-            ps.setString(4, food.getImage());
-            ps.setInt(5, food.getAvailable());
-            ps.setInt(6, food.getAvailableQty());
+            ps.setString(3, food.getFoodType());
+            ps.setBigDecimal(4, food.getPrice());
+            ps.setString(5, food.getImage());
+            ps.setInt(6, food.getAvailable());
+            ps.setInt(7, food.getAvailableQty());
 
             return ps.executeUpdate() > 0;
 
@@ -110,28 +109,26 @@ public class FoodItemDAO {
 
         return false;
     }
-
 
     // 4. UPDATE FOOD ITEM
     public boolean updateFoodItem(FoodItem food) {
 
         String sql = "UPDATE food_items SET " +
-                     "category_id = ?, food_name = ?, price = ?, " +
-                     "image = ?, available = ?, available_qty = ? " +
-                     "WHERE food_id = ?";
+                "category_id = ?, food_name = ?, food_type = ?, price = ?, " +
+                "image = ?, available = ?, available_qty = ? " +
+                "WHERE food_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
-
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, food.getCategoryId());
             ps.setString(2, food.getFoodName());
-            ps.setBigDecimal(3, food.getPrice());
-            ps.setString(4, food.getImage());
-            ps.setInt(5, food.getAvailable());
-            ps.setInt(6, food.getAvailableQty());
-            ps.setInt(7, food.getFoodId());
+            ps.setString(3, food.getFoodType());
+            ps.setBigDecimal(4, food.getPrice());
+            ps.setString(5, food.getImage());
+            ps.setInt(6, food.getAvailable());
+            ps.setInt(7, food.getAvailableQty());
+            ps.setInt(8, food.getFoodId());
 
             return ps.executeUpdate() > 0;
 
@@ -141,7 +138,6 @@ public class FoodItemDAO {
 
         return false;
     }
-
 
     // 5. DELETE FOOD ITEM
     public boolean deleteFoodItem(int foodId) {
@@ -149,9 +145,8 @@ public class FoodItemDAO {
         String sql = "DELETE FROM food_items WHERE food_id = ?";
 
         try (
-            Connection con = DBConnection.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)
-        ) {
+                Connection con = DBConnection.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, foodId);
 
