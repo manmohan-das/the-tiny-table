@@ -44,6 +44,7 @@ UNLOCK TABLES;
 
 --
 -- Table structure for table `food_items`
+-- food_type stores 'Veg' or 'Non-Veg'; update values for your actual menu as needed.
 --
 
 DROP TABLE IF EXISTS `food_items`;
@@ -57,6 +58,7 @@ CREATE TABLE `food_items` (
   `image` varchar(255) DEFAULT NULL,
   `available` tinyint(1) NOT NULL DEFAULT '1',
   `available_qty` int NOT NULL DEFAULT '0',
+  `food_type` enum('Veg','Non-Veg') NOT NULL DEFAULT 'Veg',
   PRIMARY KEY (`food_id`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `food_items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`)
@@ -69,7 +71,19 @@ CREATE TABLE `food_items` (
 
 LOCK TABLES `food_items` WRITE;
 /*!40000 ALTER TABLE `food_items` DISABLE KEYS */;
-INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20),(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15),(3,2,'Chowmin',70.00,'resources/foodImages/chowmein.png',1,20),(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15),(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10),(6,4,'Momos',80.00,'resources/foodImages/momos.png',1,20),(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0),(8,4,'Egg Roll',60.00,'resources/foodImages/eggroll.png',1,15),(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20),(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30),(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20);
+INSERT INTO `food_items`
+(`food_id`, `category_id`, `food_name`, `price`, `image`, `available`, `available_qty`, `food_type`) VALUES
+(1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20,'Veg'),
+(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15,'Veg'),
+(3,2,'Chowmin',70.00,'resources/foodImages/chowmein.png',1,20,'Veg'),
+(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15,'Veg'),
+(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10,'Veg'),
+(6,4,'Momos',80.00,'resources/foodImages/momos.png',1,20,'Veg'),
+(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0,'Veg'),
+(8,4,'Egg Roll',60.00,'resources/foodImages/eggroll.png',1,15,'Non-Veg'),
+(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20,'Veg'),
+(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30,'Veg'),
+(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20,'Veg');
 /*!40000 ALTER TABLE `food_items` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -34,6 +34,7 @@ public class FoodItemDAO {
                 food.setImage(rs.getString("image"));
                 food.setAvailable(rs.getInt("available"));
                 food.setAvailableQty(rs.getInt("available_qty"));
+                food.setFoodType(rs.getString("food_type"));
 
                 foodItems.add(food);
             }
@@ -71,6 +72,7 @@ public class FoodItemDAO {
                 food.setImage(rs.getString("image"));
                 food.setAvailable(rs.getInt("available"));
                 food.setAvailableQty(rs.getInt("available_qty"));
+                food.setFoodType(rs.getString("food_type"));
 
                 return food;
             }
@@ -87,8 +89,8 @@ public class FoodItemDAO {
     public boolean addFoodItem(FoodItem food) {
 
         String sql = "INSERT INTO food_items " +
-                     "(category_id, food_name, price, image, available, available_qty) " +
-                     "VALUES (?, ?, ?, ?, ?, ?)";
+                     "(category_id, food_name, price, image, available, available_qty, food_type) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (
             Connection con = DBConnection.getConnection();
@@ -101,6 +103,7 @@ public class FoodItemDAO {
             ps.setString(4, food.getImage());
             ps.setInt(5, food.getAvailable());
             ps.setInt(6, food.getAvailableQty());
+            ps.setString(7, food.getFoodType());
 
             return ps.executeUpdate() > 0;
 
@@ -117,7 +120,7 @@ public class FoodItemDAO {
 
         String sql = "UPDATE food_items SET " +
                      "category_id = ?, food_name = ?, price = ?, " +
-                     "image = ?, available = ?, available_qty = ? " +
+                     "image = ?, available = ?, available_qty = ?, food_type = ? " +
                      "WHERE food_id = ?";
 
         try (
@@ -131,7 +134,8 @@ public class FoodItemDAO {
             ps.setString(4, food.getImage());
             ps.setInt(5, food.getAvailable());
             ps.setInt(6, food.getAvailableQty());
-            ps.setInt(7, food.getFoodId());
+            ps.setString(7, food.getFoodType());
+            ps.setInt(8, food.getFoodId());
 
             return ps.executeUpdate() > 0;
 
