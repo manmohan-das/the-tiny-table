@@ -477,7 +477,7 @@ public class ManagerDashboard extends JFrame {
                                 new Font(
                                                 "Arial",
                                                 Font.PLAIN,
-                                                14));
+                                                15));
 
                 button.setBorder(
                                 BorderFactory.createEmptyBorder(

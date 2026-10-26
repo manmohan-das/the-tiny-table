@@ -277,12 +277,13 @@ public class Orders extends JPanel {
         sorter = new TableRowSorter<>(tableModel);
         orderTable.setRowSorter(sorter);
 
-        orderTable.setRowHeight(30);
+        orderTable.setRowHeight(35);
         orderTable.setFont(
                 new Font("Segoe UI", Font.PLAIN, 13));
 
         orderTable.getTableHeader().setFont(
-                new Font("Segoe UI", Font.BOLD, 12));
+                new Font("Segoe UI", Font.BOLD, 15));
+        orderTable.getTableHeader().setPreferredSize(new Dimension(0, 40));
 
         orderTable.getTableHeader().setBackground(
                 new Color(104, 70, 48));
