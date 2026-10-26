@@ -38,7 +38,6 @@ public class ChefPage extends JFrame {
 
         private static final Color BORDER = Color.decode("#D9D1C4");
 
-        private static final Color SIDE = Color.decode("#0F3D26");
 
         private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
 
@@ -570,43 +569,12 @@ public class ChefPage extends JFrame {
                                                 DateTimeFormatter.ofPattern(
                                                                 "dd MMM yyyy")));
 
-                /*
-                 * Actual MySQL structure:
-                 *
-                 * orders:
-                 * order_id
-                 * customer_name
-                 * customer_phone
-                 * order_date
-                 * status
-                 * note
-                 *
-                 * order_items:
-                 * order_item_id
-                 * order_id
-                 * food_id
-                 * quantity
-                 * price
-                 * subtotal
-                 *
-                 * food_items:
-                 * food_id
-                 * food_name
-                 *
-                 * The orders table does NOT contain "items".
-                 *
-                 * Food details are therefore loaded through:
-                 *
-                 * orders
-                 * ↓
-                 * order_items
-                 * ↓
-                 * food_items
-                 */
+                
 
                 String sql = "SELECT " +
 
                                 "o.order_id, " +
+                                "o.queue_no, " +
                                 "o.customer_name, " +
                                 "o.customer_phone, " +
                                 "o.order_date, " +
@@ -632,7 +600,7 @@ public class ChefPage extends JFrame {
                                 "('COMPLETED', 'CANCELLED') " +
 
                                 "ORDER BY " +
-                                "o.order_id ASC, " +
+                                "o.queue_no ASC, " +
                                 "oi.order_item_id ASC";
 
                 try (
@@ -676,6 +644,7 @@ public class ChefPage extends JFrame {
                                         order = new ChefOrder();
 
                                         order.orderNo = orderNo;
+                                        order.queueNo = result.getInt("queue_no");
 
                                         order.customer_name = safeText(
                                                         result.getString(
@@ -955,8 +924,8 @@ public class ChefPage extends JFrame {
                                                 BoxLayout.Y_AXIS));
 
                 JLabel orderNumber = new JLabel(
-                                "ORDER #" +
-                                                order.orderNo);
+                                "QUEUE #" +
+                                                order.queueNo);
 
                 orderNumber.setFont(
                                 new Font(
@@ -1462,7 +1431,7 @@ public class ChefPage extends JFrame {
 
                 JLabel number = new JLabel(
                                 "#" +
-                                                order.orderNo);
+                                                order.queueNo);
 
                 number.setFont(
                                 new Font(
@@ -1556,14 +1525,14 @@ public class ChefPage extends JFrame {
                  *
                  * After completion, the order is removed from the
                  * active list by reloading today's pending orders.
-                 * The remaining orders stay sorted by Order ID.
+                 * The remaining orders stay sorted by daily queue number.
                  */
 
                 int result = JOptionPane.showConfirmDialog(
                                 this,
 
-                                "Mark Order #" +
-                                                order.orderNo +
+                                "Mark Queue #" +
+                                                order.queueNo +
                                                 " as completed?",
 
                                 "Complete Order",
@@ -1601,7 +1570,7 @@ public class ChefPage extends JFrame {
                                  * The completed order disappears.
                                  * The next pending order automatically
                                  * moves into the active 3, while the
-                                 * remaining orders stay in Order ID order.
+                                 * remaining orders stay in daily queue order.
                                  */
 
                                 loadOrders();
@@ -1865,13 +1834,14 @@ public class ChefPage extends JFrame {
         // ========================================================
 
         private static class ChefOrder {
-
+                
                 int orderNo;
-
+                int queueNo;
+                
                 String customer_name = "";
-
+                
                 String customer_phone = "";
-
+                
                 String status = "";
 
                 String note = "";

@@ -8,14 +8,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import managerdashboard.sidebarpages.Employees;
 import managerdashboard.sidebarpages.Orders;
 import managerdashboard.sidebarpages.Payments;
 import managerdashboard.sidebarpages.Sales;
 import managerdashboard.sidebarpages.Settings;
 import managerdashboard.sidebarpages.CategoryManagement;
-import model.Order;
 import dao.StoreProfileDAO;
 import java.beans.PropertyChangeListener;
 

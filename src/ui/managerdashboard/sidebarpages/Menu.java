@@ -129,6 +129,7 @@ public class Menu extends JPanel {
                                                 "ID",
                                                 "Item Name",
                                                 "Category",
+                                                "Food Type",
                                                 "Price",
                                                 "Availability",
                                                 "Quantity",
@@ -198,6 +199,10 @@ public class Menu extends JPanel {
 
                 menuTable.getColumnModel()
                                 .getColumn(6)
+                                .setCellRenderer(centerRenderer);
+
+                menuTable.getColumnModel()
+                                .getColumn(7)
                                 .setCellRenderer(
                                                 new ImageCellRenderer());
 
@@ -219,14 +224,18 @@ public class Menu extends JPanel {
 
                 menuTable.getColumnModel()
                                 .getColumn(4)
-                                .setPreferredWidth(130);
+                                .setPreferredWidth(100);
 
                 menuTable.getColumnModel()
                                 .getColumn(5)
-                                .setPreferredWidth(90);
+                                .setPreferredWidth(130);
 
                 menuTable.getColumnModel()
                                 .getColumn(6)
+                                .setPreferredWidth(90);
+
+                menuTable.getColumnModel()
+                                .getColumn(7)
                                 .setPreferredWidth(110);
 
                 sorter = new TableRowSorter<>(
@@ -623,6 +632,7 @@ public class Menu extends JPanel {
                                                 food.getFoodId(),
                                                 food.getFoodName(),
                                                 categoryName,
+                                                food.getFoodType(),
                                                 "₹" + food.getPrice(),
                                                 availability,
                                                 food.getAvailableQty(),
@@ -659,6 +669,9 @@ public class Menu extends JPanel {
                         categoryField.addItem(
                                         category);
                 }
+
+                JComboBox<String> foodTypeField = new JComboBox<>(
+                                new String[] { "Veg", "Non-Veg" });
 
                 JTextField priceField = new JTextField();
 
@@ -714,7 +727,7 @@ public class Menu extends JPanel {
 
                 JPanel panel = new JPanel(
                                 new GridLayout(
-                                                6,
+                                                7,
                                                 2,
                                                 10,
                                                 10));
@@ -735,6 +748,11 @@ public class Menu extends JPanel {
                                 new JLabel("Category:"));
 
                 panel.add(categoryField);
+
+                panel.add(
+                                new JLabel("Food Type:"));
+
+                panel.add(foodTypeField);
 
                 panel.add(
                                 new JLabel("Price:"));
@@ -893,6 +911,9 @@ public class Menu extends JPanel {
                 food.setFoodName(
                                 name);
 
+                food.setFoodType(
+                                foodTypeField.getSelectedItem().toString());
+
                 food.setPrice(
                                 price);
 
@@ -979,6 +1000,10 @@ public class Menu extends JPanel {
                 categoryField.setSelectedItem(
                                 currentCategory);
 
+                JComboBox<String> foodTypeField = new JComboBox<>(
+                                new String[] { "Veg", "Non-Veg" });
+                foodTypeField.setSelectedItem(existingFood.getFoodType());
+
                 JTextField priceField = new JTextField(
                                 existingFood
                                                 .getPrice()
@@ -1048,7 +1073,7 @@ public class Menu extends JPanel {
 
                 JPanel panel = new JPanel(
                                 new GridLayout(
-                                                6,
+                                                7,
                                                 2,
                                                 10,
                                                 10));
@@ -1069,6 +1094,11 @@ public class Menu extends JPanel {
                                 new JLabel("Category:"));
 
                 panel.add(categoryField);
+
+                panel.add(
+                                new JLabel("Food Type:"));
+
+                panel.add(foodTypeField);
 
                 panel.add(
                                 new JLabel("Price:"));
@@ -1216,6 +1246,9 @@ public class Menu extends JPanel {
 
                 existingFood.setFoodName(
                                 name);
+
+                existingFood.setFoodType(
+                                foodTypeField.getSelectedItem().toString());
 
                 existingFood.setPrice(
                                 price);
@@ -1399,27 +1432,38 @@ public class Menu extends JPanel {
         }
         // SEARCH
         private void searchItems() {
-                if (searchField == null|| categoryBox == null|| availabilityBox == null) {
-                 return;
-                 }
+                if (searchField == null || categoryBox == null
+                                || availabilityBox == null || sorter == null) {
+                        return;
+                }
 
                 String searchText = searchField.getText().trim().toLowerCase();
-                String category = categoryBox .getSelectedItem() .toString();
-                String availability = availabilityBox.getSelectedItem().toString();
+                Object selectedCategory = categoryBox.getSelectedItem();
+                Object selectedAvailability = availabilityBox.getSelectedItem();
+                String category = selectedCategory == null
+                                ? "All"
+                                : selectedCategory.toString();
+                String availability = selectedAvailability == null
+                                ? "All"
+                                : selectedAvailability.toString();
                 sorter.setRowFilter(
                                 new RowFilter<DefaultTableModel, Integer>() {
                                         @Override
                                         public boolean include( Entry<? extends DefaultTableModel, ? extends Integer> entry) {
-                                                int row = entry.getIdentifier();
-                                                String id = tableModel.getValueAt(row, 0) .toString() .toLowerCase();
-                                                String name = tableModel.getValueAt(row,1).toString() .toLowerCase();
-                                                String itemCategory = tableModel.getValueAt( row, 2) .toString();
-                                                String itemAvailability = tableModel.getValueAt(row, 4).toString();
-                                                boolean searchMatch = searchText.isEmpty()|| id.contains(searchText)|| name.contains( searchText);
-
-                                                boolean categoryMatch = category.equals("All")|| category.equals(  itemCategory);
-                                                boolean availabilityMatch = availability.equals("All")|| availability.equals(itemAvailability);
-                                                return searchMatch&& categoryMatch&& availabilityMatch;}});
+                                                String id = entry.getStringValue(0).toLowerCase();
+                                                String name = entry.getStringValue(1).toLowerCase();
+                                                String itemCategory = entry.getStringValue(2);
+                                                String itemAvailability = entry.getStringValue(5);
+                                                boolean searchMatch = searchText.isEmpty()
+                                                                || id.contains(searchText)
+                                                                || name.contains(searchText);
+                                                boolean categoryMatch = category.equals("All")
+                                                                || category.equals(itemCategory);
+                                                boolean availabilityMatch = availability.equals("All")
+                                                                || availability.equals(itemAvailability);
+                                                return searchMatch && categoryMatch && availabilityMatch;
+                                        }
+                                });
         }
 
         // REFRESH
@@ -1431,7 +1475,7 @@ public class Menu extends JPanel {
 
                 loadCategories();
                 loadFoodItems();
-                sorter.setRowFilter(null);
+                searchItems();
         }
         // SUMMARY
 
@@ -1443,7 +1487,7 @@ public class Menu extends JPanel {
                 int available = 0;
                 int outOfStock = 0;
                 for (int i = 0; i < total; i++) {
-                        String status = tableModel.getValueAt(i, 4) .toString();
+                        String status = tableModel.getValueAt(i, 5).toString();
                         if (status.equals(
                                         "Available")) {
                                 available++;

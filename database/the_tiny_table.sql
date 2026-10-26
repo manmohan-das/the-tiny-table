@@ -71,6 +71,7 @@ UNLOCK TABLES;
 
 --
 -- Table structure for table `food_items`
+-- food_type stores 'Veg' or 'Non-Veg'; update values for your actual menu as needed.
 --
 
 DROP TABLE IF EXISTS `food_items`;
@@ -84,6 +85,7 @@ CREATE TABLE `food_items` (
   `image` varchar(255) DEFAULT NULL,
   `available` tinyint(1) NOT NULL DEFAULT '1',
   `available_qty` int NOT NULL DEFAULT '0',
+  `food_type` enum('Veg','Non-Veg') NOT NULL DEFAULT 'Veg',
   `food_type` enum('Veg','Non-Veg') NOT NULL DEFAULT 'Veg',
   PRIMARY KEY (`food_id`),
   KEY `category_id` (`category_id`),
