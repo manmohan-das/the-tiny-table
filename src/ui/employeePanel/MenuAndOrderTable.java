@@ -82,7 +82,7 @@ public class MenuAndOrderTable extends JFrame {
         // ================= LOAD FOOD FROM MYSQL =================
         void loadFoodFromDatabase() {
                 java.util.List<Food> list = new ArrayList<>();
-                String sql = "SELECT f.food_id, f.food_name, f.price, f.image, f.available, " +
+                String sql = "SELECT f.food_id, f.food_name, f.price, f.image, f.available, f.food_type, " +
                                 "c.category_name FROM food_items f " +
                                 "JOIN categories c ON c.category_id=f.category_id " +
                                 "WHERE f.available=1 ORDER BY c.category_name, f.food_id";
@@ -91,7 +91,8 @@ public class MenuAndOrderTable extends JFrame {
                                 ResultSet r = p.executeQuery()) {
                         while (r.next()) {
                                 list.add(new Food(r.getString("food_name"), r.getString("category_name"),
-                                                "", r.getDouble("price"), r.getString("image")));
+                                                "", r.getDouble("price"), r.getString("image"),
+                                                r.getString("food_type")));
                         }
                         FOOD = list.toArray(new Food[0]);
                 } catch (Exception ex) {
@@ -289,6 +290,11 @@ public class MenuAndOrderTable extends JFrame {
 
                 addCategory(p, "▦", "All", null);
 
+                // Food type filters
+                addCategory(p, "●", "Veg", null);
+                addCategory(p, "●", "Non-Veg", null);
+
+                // Database categories
                 String[] icons = { "◈", "◈", "▱", "◇", "◆", "●", "▣" };
                 java.util.List<String> cats = loadCategoryNames();
                 int iconIndex = 0;
@@ -367,20 +373,17 @@ public class MenuAndOrderTable extends JFrame {
 
                 main.addActionListener(e -> {
 
-                        if (name.equals("All")) {
-
+                        if (name.equalsIgnoreCase("All")) {
                                 category = "All";
-                                subCategory = "";
-
                         } else {
-
-                                if (category.equals(name))
+                                if (category.equalsIgnoreCase(name)) {
                                         category = "All";
-                                else
+                                } else {
                                         category = name;
-
-                                subCategory = "";
+                                }
                         }
+
+                        subCategory = "";
 
                         rebuildSidebar();
                         clearSearch();
@@ -865,23 +868,31 @@ public class MenuAndOrderTable extends JFrame {
 
                 for (Food f : FOOD) {
 
-                        boolean catOK = category.equals("All") ||
-                                        f.category.equals(category);
+                        boolean typeOK = true;
 
-                        boolean subOK = subCategory.isEmpty() ||
-                                        f.subCategory.equals(
-                                                        subCategory);
+                        if (category.equalsIgnoreCase("Veg")) {
+                                typeOK = f.foodType != null
+                                                && f.foodType.trim().equalsIgnoreCase("Veg");
 
-                        boolean searchOK = query.isEmpty() ||
-                                        f.name.toLowerCase()
-                                                        .contains(query);
+                        } else if (category.equalsIgnoreCase("Non-Veg")) {
+                                typeOK = f.foodType != null
+                                                && f.foodType.trim().equalsIgnoreCase("Non-Veg");
+                        }
 
-                        if (catOK &&
-                                        subOK &&
-                                        searchOK) {
+                        boolean catOK = category.equalsIgnoreCase("All")
+                                        || category.equalsIgnoreCase("Veg")
+                                        || category.equalsIgnoreCase("Non-Veg")
+                                        || (f.category != null
+                                                        && f.category.equalsIgnoreCase(category));
 
-                                foodArea.add(
-                                                createFoodCard(f));
+                        boolean subOK = subCategory.isEmpty()
+                                        || f.subCategory.equals(subCategory);
+
+                        boolean searchOK = query.isEmpty()
+                                        || f.name.toLowerCase().contains(query);
+
+                        if (catOK && typeOK && subOK && searchOK) {
+                                foodArea.add(createFoodCard(f));
                         }
                 }
 
@@ -958,6 +969,20 @@ public class MenuAndOrderTable extends JFrame {
                         image.setForeground(SUBTEXT);
                 }
 
+                // Image container - only food image
+                JPanel imageBox = new JPanel(null);
+                imageBox.setOpaque(false);
+                imageBox.setPreferredSize(new Dimension(118, 118));
+                imageBox.setMinimumSize(new Dimension(118, 118));
+                imageBox.setMaximumSize(new Dimension(118, 118));
+
+                image.setBounds(0, 0, 118, 118);
+                imageBox.add(image);
+
+                FoodTypeSymbol foodTypeSymbol = new FoodTypeSymbol(f.foodType);
+                foodTypeSymbol.setBounds(92, 4, 22, 22);
+                imageBox.add(foodTypeSymbol);
+
                 JPanel info = new JPanel();
 
                 info.setOpaque(false);
@@ -1006,20 +1031,34 @@ public class MenuAndOrderTable extends JFrame {
                         refreshCart();
                 });
 
-                info.add(name);
+                // Dish name with Veg/Non-Veg symbol at upper-right corner
+                JPanel nameRow = new JPanel(new BorderLayout(5, 0));
+                nameRow.setOpaque(false);
+                nameRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+                nameRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
 
-                info.add(
-                                Box.createVerticalStrut(5));
+                name.setHorizontalAlignment(SwingConstants.LEFT);
+                nameRow.add(name, BorderLayout.CENTER);
+
+                // FoodTypeSymbol foodTypeSymbol = new FoodTypeSymbol(f.foodType);
+                foodTypeSymbol.setPreferredSize(new Dimension(20, 20));
+                foodTypeSymbol.setMinimumSize(new Dimension(20, 20));
+                foodTypeSymbol.setMaximumSize(new Dimension(20, 20));
+
+                nameRow.add(foodTypeSymbol, BorderLayout.EAST);
+
+                info.add(nameRow);
+
+                info.add(Box.createVerticalStrut(5));
 
                 info.add(price);
-
                 info.add(
                                 Box.createVerticalGlue());
 
                 info.add(add);
 
                 card.add(
-                                image,
+                                imageBox,
                                 BorderLayout.WEST);
 
                 card.add(
@@ -1874,6 +1913,7 @@ public class MenuAndOrderTable extends JFrame {
                 public String subCategory;
                 public double price;
                 public String image;
+                public String foodType;
 
                 public Food(
                                 String name,
@@ -1881,12 +1921,58 @@ public class MenuAndOrderTable extends JFrame {
                                 String subCategory,
                                 double price,
                                 String image) {
+                        this(name, category, subCategory, price, image, "Veg");
+                }
+
+                public Food(
+                                String name,
+                                String category,
+                                String subCategory,
+                                double price,
+                                String image,
+                                String foodType) {
 
                         this.name = name;
                         this.category = category;
                         this.subCategory = subCategory;
                         this.price = price;
                         this.image = image;
+                        this.foodType = foodType == null ? "Veg" : foodType;
+                }
+        }
+
+        // Draws the standard food-type marker: green for Veg, red for Non-Veg.
+        static class FoodTypeSymbol extends JComponent {
+                private final boolean nonVeg;
+
+                FoodTypeSymbol(String foodType) {
+                        this.nonVeg = "Non-Veg".equalsIgnoreCase(
+                                        foodType == null ? "" : foodType.trim());
+                        setOpaque(false);
+                        setToolTipText(nonVeg ? "Non-Veg" : "Veg");
+                }
+
+                @Override
+                protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+
+                        Graphics2D g2 = (Graphics2D) g.create();
+                        g2.setRenderingHint(
+                                        RenderingHints.KEY_ANTIALIASING,
+                                        RenderingHints.VALUE_ANTIALIAS_ON);
+
+                        Color typeColor = nonVeg ? new Color(190, 45, 45)
+                                        : new Color(35, 135, 65);
+
+                        g2.setColor(new Color(255, 252, 246, 235));
+                        g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 4, 4);
+
+                        g2.setColor(typeColor);
+                        g2.setStroke(new BasicStroke(1.5f));
+                        g2.drawRect(2, 2, getWidth() - 5, getHeight() - 5);
+                        g2.fillOval(6, 6, getWidth() - 13, getHeight() - 13);
+
+                        g2.dispose();
                 }
         }
 

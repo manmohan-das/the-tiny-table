@@ -16,7 +16,7 @@ public class FoodItem {
     // Parameterized Constructor
     public FoodItem(int foodId, int categoryId, String foodName,
                     BigDecimal price, String image,
-                    int available, int availableQty) {
+                    int available, int availableQty, String foodType) {
 
         this.foodId = foodId;
         this.categoryId = categoryId;
@@ -25,6 +25,7 @@ public class FoodItem {
         this.image = image;
         this.available = available;
         this.availableQty = availableQty;
+        this.foodType = (foodType == null || foodType.trim().isEmpty()) ? "Veg" : foodType;
     }
 
     // Default Constructor
@@ -58,12 +59,13 @@ public class FoodItem {
         this.foodName = foodName;
     }
 
+    // Food Type Veg / Non-Veg
     public String getFoodType() {
         return foodType;
     }
 
     public void setFoodType(String foodType) {
-        this.foodType = foodType;
+        this.foodType = (foodType == null || foodType.trim().isEmpty()) ? "Veg" : foodType;
     }
 
     // Price
