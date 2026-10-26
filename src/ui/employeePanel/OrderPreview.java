@@ -1,10 +1,14 @@
 package employeePanel;
 
 import java.awt.*;
+import java.io.File;
+import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import javax.swing.*;
 import javax.swing.border.*;
+import dao.AppSettingsDAO;
 import dao.TaxSettingsDAO;
 
 /**
@@ -22,7 +26,7 @@ public class OrderPreview extends JPanel {
     private final double previouslyPaid;
     private final Consumer<String> editPaymentHandler;
 
-    private final JTextField customerName = new JTextField("Walk-in Guest");
+    private final JTextField customerName = new JTextField("");
     private final JTextField phone = new JTextField();
     private final JTextArea notes = new JTextArea(3, 20);
 
@@ -58,11 +62,14 @@ public class OrderPreview extends JPanel {
     private JPanel cashReceivedRow;
     private JPanel returnSummaryRow;
     private JPanel cashChangeRow;
+    private JLabel cashChangeLabel;
     private JRadioButton percentageModeButton;
     private JRadioButton fixedAmountModeButton;
     private final Map<String, JToggleButton> tenderButtons = new LinkedHashMap<>();
     private double selectedDiscountRate = 0;
     private boolean fixedAmountMode = false;
+    private boolean upiPaymentConfirmed = false;
+    private boolean upiDialogOpen = false;
 
     private final Color ACTIVE = MenuAndOrderTable.GREEN;
 
@@ -285,7 +292,7 @@ public class OrderPreview extends JPanel {
         fields.add(customerName);
 
         fields.add(Box.createVerticalStrut(14));
-        fields.add(fieldLabel("Mobile Number (Optional)"));
+        fields.add(fieldLabel("Mobile Number*"));
         fields.add(Box.createVerticalStrut(6));
         styleField(phone);
         fields.add(phone);
@@ -805,7 +812,12 @@ public class OrderPreview extends JPanel {
                         paymentRow++);
                 addPaymentRow(center, compactSummaryRow("Discount on additions", addedDiscountValue, false),
                         paymentRow++);
-                addPaymentRow(center, compactSummaryRow("Tax on new items only (" + TaxSettingsDAO.formatPercent(TaxSettingsDAO.getRatePercent()) + "%)", addedTaxValue, false), paymentRow++);
+                addPaymentRow(center,
+                        compactSummaryRow(
+                                "Tax on new items only ("
+                                        + TaxSettingsDAO.formatPercent(TaxSettingsDAO.getRatePercent()) + "%)",
+                                addedTaxValue, false),
+                        paymentRow++);
             }
             if (calculateRemovedSubtotal() > 0.005) {
                 addPaymentRow(center, compactSummaryRow("Removed items subtotal", removedSubtotalValue, false),
@@ -920,7 +932,14 @@ public class OrderPreview extends JPanel {
             choice.setPreferredSize(new Dimension(100, 40));
             choice.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
             choice.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            choice.addActionListener(e -> paymentTender.setSelectedItem(method));
+            choice.addActionListener(e -> {
+                paymentTender.setSelectedItem(method);
+                if (!"UPI".equals(method)) {
+                    upiPaymentConfirmed = false;
+                } else if (requiresUpiPayment() && !upiPaymentConfirmed) {
+                    SwingUtilities.invokeLater(this::showUpiPaymentDialog);
+                }
+            });
             tenderGroup.add(choice);
             tenderButtons.put(method, choice);
             choices.add(choice);
@@ -956,13 +975,13 @@ public class OrderPreview extends JPanel {
         cashChangeRow.setPreferredSize(new Dimension(0, 20));
         cashChangeRow.setMaximumSize(new Dimension(Short.MAX_VALUE, 20));
         cashChangeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel changeLabel = new JLabel("Change to Return:");
-        changeLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        changeLabel.setForeground(MenuAndOrderTable.TEXT);
+        cashChangeLabel = new JLabel("Change to Return:");
+        cashChangeLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        cashChangeLabel.setForeground(MenuAndOrderTable.TEXT);
 
         changeValue.setFont(new Font("SansSerif", Font.BOLD, 14));
         changeValue.setForeground(ACTIVE);
-        cashChangeRow.add(changeLabel, BorderLayout.WEST);
+        cashChangeRow.add(cashChangeLabel, BorderLayout.WEST);
         cashChangeRow.add(changeValue, BorderLayout.CENTER);
         box.add(cashChangeRow);
 
@@ -1067,8 +1086,8 @@ public class OrderPreview extends JPanel {
                     : 0.0;
             double oldTaxable = previousOrder.subtotal - previousOrder.discount;
             double oldTaxRate = oldTaxable > 0.005
-                ? previousOrder.gst / oldTaxable
-                : TaxSettingsDAO.getRate(); 
+                    ? previousOrder.gst / oldTaxable
+                    : TaxSettingsDAO.getRate();
             double addedDiscount = fixedAmountMode
                     ? Math.min(addedSubtotal, readFixedDiscountAmount())
                     : addedSubtotal * getDiscountRate();
@@ -1240,25 +1259,173 @@ public class OrderPreview extends JPanel {
             String receivedText = cashReceived.getText().trim();
 
             if (receivedText.isEmpty()) {
-                changeValue.setText("₹ 0.00");
-                changeValue.setForeground(ACTIVE);
+                cashChangeLabel.setText("Due:");
+                changeValue.setText("₹ " + MenuAndOrderTable.money(total));
+                changeValue.setForeground(MenuAndOrderTable.RED);
                 return;
             }
 
             double received = Double.parseDouble(receivedText);
             double change = received - total;
 
-            if (change < 0) {
-                changeValue.setText("₹ 0.00");
-                changeValue.setForeground(MenuAndOrderTable.RED);
-            } else {
+            if (change > 0.005) {
+                cashChangeLabel.setText("Change to Return:");
                 changeValue.setText("₹ " + MenuAndOrderTable.money(change));
                 changeValue.setForeground(ACTIVE);
+            } else {
+                double due = Math.max(0.0, -change);
+                cashChangeLabel.setText("Due:");
+                changeValue.setText("₹ " + MenuAndOrderTable.money(due));
+                changeValue.setForeground(due > 0.005 ? MenuAndOrderTable.RED : ACTIVE);
             }
         } catch (NumberFormatException e) {
             changeValue.setText("₹ 0.00");
             changeValue.setForeground(ACTIVE);
         }
+    }
+
+    private boolean requiresUpiPayment() {
+        return paymentTender != null
+                && "UPI".equalsIgnoreCase(String.valueOf(paymentTender.getSelectedItem()))
+                && amountDueForCurrentOrder() > 0.005;
+    }
+
+    private double amountDueForCurrentOrder() {
+        if (editedOrder != null) {
+            return Math.max(0.0, editedOrder.total - previouslyPaid);
+        }
+
+        double subtotal = calculateSubtotal();
+        double taxable = subtotal - subtotal * getDiscountRate();
+        return Math.max(0.0, taxable + taxable * TaxSettingsDAO.getRate());
+    }
+
+    /**
+     * Shows the payment QR first, then continues through the existing save flow.
+     */
+    private void showUpiPaymentDialog() {
+        if (upiDialogOpen || !requiresUpiPayment()) {
+            return;
+        }
+
+        upiDialogOpen = true;
+        JDialog dialog = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "UPI Payment",
+                Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBackground(MenuAndOrderTable.SURFACE);
+        content.setBorder(new EmptyBorder(20, 24, 18, 24));
+
+        JLabel amount = new JLabel("Scan to pay ₹" + MenuAndOrderTable.money(amountDueForCurrentOrder()));
+        amount.setAlignmentX(Component.CENTER_ALIGNMENT);
+        amount.setFont(new Font("SansSerif", Font.BOLD, 17));
+        amount.setForeground(MenuAndOrderTable.TEXT);
+        content.add(amount);
+        content.add(Box.createVerticalStrut(14));
+
+        String qrSetting = AppSettingsDAO.getValue("upi_qr");
+        ImageIcon qrIcon = loadUpiQrIcon(qrSetting);
+        JLabel qrView;
+        if (qrIcon != null) {
+            qrView = new JLabel(qrIcon);
+        } else {
+            qrView = new JLabel("QR image not found", SwingConstants.CENTER);
+            qrView.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            qrView.setForeground(MenuAndOrderTable.SUBTEXT);
+            qrView.setPreferredSize(new Dimension(230, 230));
+            qrView.setBorder(new LineBorder(MenuAndOrderTable.BORDER, 1));
+        }
+        qrView.setAlignmentX(Component.CENTER_ALIGNMENT);
+        content.add(qrView);
+        content.add(Box.createVerticalStrut(12));
+
+        String upiId = AppSettingsDAO.getValue("upi_id");
+        JLabel upiLabel = new JLabel("UPI ID: "
+                + (upiId == null || upiId.trim().isEmpty() ? "Not configured" : upiId.trim()));
+        upiLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        upiLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        upiLabel.setForeground(MenuAndOrderTable.TEXT);
+        content.add(upiLabel);
+        content.add(Box.createVerticalStrut(16));
+
+        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttons.setOpaque(false);
+        JButton cancel = new JButton("Cancel");
+        stylePaymentButton(cancel);
+        cancel.setForeground(MenuAndOrderTable.TEXT);
+        cancel.setBackground(MenuAndOrderTable.SURFACE);
+        JButton confirm = new JButton("Confirm Payment");
+        stylePaymentButton(confirm);
+        confirm.setForeground(Color.WHITE);
+        confirm.setBackground(ACTIVE);
+        buttons.add(cancel);
+        buttons.add(confirm);
+        content.add(buttons);
+
+        cancel.addActionListener(e -> dialog.dispose());
+        confirm.addActionListener(e -> {
+            upiPaymentConfirmed = true;
+            dialog.dispose();
+        });
+        dialog.setContentPane(content);
+        dialog.getRootPane().setDefaultButton(confirm);
+        dialog.pack();
+        dialog.setResizable(false);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+        upiDialogOpen = false;
+
+        if (upiPaymentConfirmed) {
+            confirmOrder();
+        }
+    }
+
+    private ImageIcon loadUpiQrIcon(String configuredValue) {
+        String configured = configuredValue == null ? "" : configuredValue.trim();
+        List<String> candidates = new ArrayList<>();
+        if (configured.isEmpty() || "qr_image".equalsIgnoreCase(configured)) {
+            candidates.add("resources/qr_image.jpeg");
+            candidates.add("resources/qr_image");
+        } else {
+            String normalized = configured.replace('\\', '/');
+            candidates.add(normalized);
+            if (!normalized.startsWith("resources/")) {
+                candidates.add("resources/" + normalized);
+            }
+            if (!normalized.contains(".") && !normalized.endsWith("/")) {
+                candidates.add(normalized + ".png");
+                candidates.add("resources/" + normalized + ".png");
+            }
+        }
+
+        for (String candidate : candidates) {
+            String resourcePath = candidate.startsWith("/")
+                    ? candidate.substring(1)
+                    : candidate;
+            URL resource = getClass().getClassLoader().getResource(resourcePath);
+            ImageIcon icon = null;
+            if (resource != null) {
+                icon = new ImageIcon(resource);
+            } else {
+                File file = new File(candidate);
+                if (!file.isFile()) {
+                    file = new File("resources", candidate);
+                }
+                if (file.isFile()) {
+                    icon = new ImageIcon(file.getAbsolutePath());
+                }
+            }
+
+            if (icon != null && icon.getIconWidth() > 0 && icon.getIconHeight() > 0) {
+                Image scaled = icon.getImage().getScaledInstance(280, 280, Image.SCALE_SMOOTH);
+                return new ImageIcon(scaled);
+            }
+        }
+        return null;
     }
 
     private void confirmOrder() {
@@ -1273,9 +1440,24 @@ public class OrderPreview extends JPanel {
         }
 
         // Mobile is optional, but when supplied it must contain exactly 10 digits.
-        if (!phoneNumber.isEmpty() && !phoneNumber.matches("\\d{10}")) {
+        if (phoneNumber.isEmpty()) {
+            JOptionPane.showMessageDialog(app, "Enter customer mobile number.",
+                    "Validation", JOptionPane.WARNING_MESSAGE);
+            phone.requestFocus();
+            return;
+        }
+
+        if (!phoneNumber.matches("\\d{10}")) {
             JOptionPane.showMessageDialog(app,
-                    "Enter a valid 10 digit mobile number or leave it blank.",
+                    "Enter a valid 10 digit mobile number.",
+                    "Validation", JOptionPane.WARNING_MESSAGE);
+            phone.requestFocus();
+            return;
+        }
+
+        if (!phoneNumber.matches("\\d{10}")) {
+            JOptionPane.showMessageDialog(app,
+                    "Enter a valid 10 digit mobile number.",
                     "Validation", JOptionPane.WARNING_MESSAGE);
             phone.requestFocus();
             return;
@@ -1312,6 +1494,11 @@ public class OrderPreview extends JPanel {
                 fixedDiscountAmount.requestFocus();
                 return;
             }
+        }
+
+        if (requiresUpiPayment() && !upiPaymentConfirmed) {
+            showUpiPaymentDialog();
+            return;
         }
 
         boolean isCash = paymentTender != null

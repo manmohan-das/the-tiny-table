@@ -1,13 +1,6 @@
 package dao;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import util.DBConnection;
-
 /** Database access for the GST setting used by new orders. */
 public final class TaxSettingsDAO {
     private static final String SETTING_KEY = "gst_rate_percent";
@@ -59,49 +52,27 @@ public final class TaxSettingsDAO {
         if (Double.isNaN(percent) || Double.isInfinite(percent) || percent < 0.0 || percent > 100.0)
             return false;
 
-        String updateSql = "UPDATE gst_settings SET setting_value=? WHERE setting_key=?";
-        String insertSql = "INSERT INTO gst_settings(setting_key, setting_value) VALUES(?, ?)";
-        try (Connection connection = DBConnection.getConnection()) {
-            int updated;
-            try (PreparedStatement statement = connection.prepareStatement(updateSql)) {
-                statement.setBigDecimal(1, BigDecimal.valueOf(percent));
-                statement.setString(2, SETTING_KEY);
-                updated = statement.executeUpdate();
-            }
-
-            if (updated == 0) {
-                try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
-                    statement.setString(1, SETTING_KEY);
-                    statement.setBigDecimal(2, BigDecimal.valueOf(percent));
-                    statement.executeUpdate();
-                }
-            }
-
+        if (AppSettingsDAO.saveValue(SETTING_KEY,
+                BigDecimal.valueOf(percent).stripTrailingZeros().toPlainString())) {
             cachedRatePercent = percent;
             lastReadAt = System.currentTimeMillis();
             return true;
-        } catch (SQLException ex) {
-            System.err.println("Could not save GST setting: " + ex.getMessage());
-            return false;
         }
+        return false;
     }
 
     private static double readRatePercent() {
-        String sql = "SELECT setting_value FROM gst_settings WHERE setting_key=?";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, SETTING_KEY);
-            try (ResultSet result = statement.executeQuery()) {
-                if (result.next()) {
-                    double value = result.getBigDecimal("setting_value").doubleValue();
-                    if (!Double.isNaN(value) && !Double.isInfinite(value)
-                            && value >= 0.0 && value <= 100.0) {
-                        return value;
-                    }
+        String storedValue = AppSettingsDAO.getValue(SETTING_KEY);
+        if (storedValue != null) {
+            try {
+                double value = new BigDecimal(storedValue.trim()).doubleValue();
+                if (!Double.isNaN(value) && !Double.isInfinite(value)
+                        && value >= 0.0 && value <= 100.0) {
+                    return value;
                 }
+            } catch (NumberFormatException ignored) {
+                System.err.println("Invalid GST rate in app_settings; using 5% default.");
             }
-        } catch (SQLException ex) {
-            System.err.println("Could not load GST setting; using 5% default: " + ex.getMessage());
         }
         return DEFAULT_RATE_PERCENT;
     }

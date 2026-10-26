@@ -18,6 +18,33 @@ USE `the_tiny_table`;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `app_settings`
+--
+
+DROP TABLE IF EXISTS `app_settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `app_settings` (
+  `setting_id` int NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(100) NOT NULL,
+  `setting_value` text NOT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_id`),
+  UNIQUE KEY `setting_key` (`setting_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `app_settings`
+--
+
+LOCK TABLES `app_settings` WRITE;
+/*!40000 ALTER TABLE `app_settings` DISABLE KEYS */;
+INSERT INTO `app_settings` VALUES (1,'gst_rate','5.00','2026-10-26 11:58:49'),(2,'upi_id','8002870395@ybl','2026-10-26 11:58:49'),(3,'upi_qr','qr_image','2026-10-26 12:19:10');
+/*!40000 ALTER TABLE `app_settings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `categories`
 --
 
@@ -57,6 +84,7 @@ CREATE TABLE `food_items` (
   `image` varchar(255) DEFAULT NULL,
   `available` tinyint(1) NOT NULL DEFAULT '1',
   `available_qty` int NOT NULL DEFAULT '0',
+  `food_type` enum('Veg','Non-Veg') NOT NULL DEFAULT 'Veg',
   PRIMARY KEY (`food_id`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `food_items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`)
@@ -69,7 +97,7 @@ CREATE TABLE `food_items` (
 
 LOCK TABLES `food_items` WRITE;
 /*!40000 ALTER TABLE `food_items` DISABLE KEYS */;
-INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20),(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15),(3,2,'Chowmin',70.00,'resources/foodImages/chowmein.png',1,20),(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15),(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10),(6,4,'Momos',80.00,'resources/foodImages/momos.png',1,20),(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0),(8,4,'Egg Roll',60.00,'resources/foodImages/eggroll.png',1,15),(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20),(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30),(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20);
+INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20,'Veg'),(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15,'Veg'),(3,2,'Chowmin',70.00,'resources/foodImages/chowmein.png',1,20,'Veg'),(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15,'Veg'),(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10,'Veg'),(6,4,'Momos',80.00,'resources/foodImages/momos.png',1,20,'Veg'),(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0,'Veg'),(8,4,'Egg Roll',60.00,'resources/foodImages/eggroll.png',1,15,'Non-Veg'),(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20,'Veg'),(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30,'Veg'),(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20,'Veg');
 /*!40000 ALTER TABLE `food_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -262,4 +290,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-24 21:46:03
+-- Dump completed on 2026-10-26 19:30:06
