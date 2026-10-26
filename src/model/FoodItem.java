@@ -7,6 +7,7 @@ public class FoodItem {
     private int foodId;
     private int categoryId;
     private String foodName;
+    private String foodType = "Veg";
     private BigDecimal price;
     private String image;
     private int available;
@@ -55,6 +56,14 @@ public class FoodItem {
 
     public void setFoodName(String foodName) {
         this.foodName = foodName;
+    }
+
+    public String getFoodType() {
+        return foodType;
+    }
+
+    public void setFoodType(String foodType) {
+        this.foodType = foodType;
     }
 
     // Price
