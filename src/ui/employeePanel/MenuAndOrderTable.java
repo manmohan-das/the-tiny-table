@@ -37,6 +37,7 @@ public class MenuAndOrderTable extends JFrame {
         // ================= STATE =================
         String category = "All";
         String subCategory = "";
+        String foodTypeFilter = "All";
 
         JTextField search;
         JPanel foodArea;
@@ -210,7 +211,7 @@ public class MenuAndOrderTable extends JFrame {
 
                 center.setBorder(
                                 new EmptyBorder(
-                                                16, 14, 16, 14));
+                                                24, 14, 24, 14));
 
                 JPanel menu = new JPanel(
                                 new BorderLayout());
@@ -239,7 +240,12 @@ public class MenuAndOrderTable extends JFrame {
                 menuHeading.setOpaque(false);
                 menuHeading.setBorder(new EmptyBorder(0, 0, 12, 0));
                 menuHeading.add(heading, BorderLayout.WEST);
-                menuHeading.add(search, BorderLayout.EAST);
+
+                JPanel searchTools = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+                searchTools.setOpaque(false);
+                searchTools.add(search);
+                searchTools.add(createFoodTypeSwitch());
+                menuHeading.add(searchTools, BorderLayout.EAST);
 
                 foodArea = new FoodGrid();
 
@@ -292,10 +298,6 @@ public class MenuAndOrderTable extends JFrame {
                 p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
                 addCategory(p, "▦", "All", null);
-
-                // Food type filters
-                addCategory(p, "●", "Veg", null);
-                addCategory(p, "●", "Non-Veg", null);
 
                 // Database categories
                 String[] icons = { "◈", "◈", "▱", "◇", "◆", "●", "▣" };
@@ -459,6 +461,30 @@ public class MenuAndOrderTable extends JFrame {
 
                 parent.revalidate();
                 parent.repaint();
+        }
+
+        // Compact food-type switch beside Search: All -> Veg -> Non-Veg -> All.
+        private JButton createFoodTypeSwitch() {
+                JButton toggle = new RoundedButton(foodTypeFilter);
+                toggle.setPreferredSize(new Dimension(92, 40));
+                toggle.setFont(new Font("SansSerif", Font.BOLD, 14));
+                toggle.setForeground(Color.WHITE);
+                toggle.setBackground(GREEN);
+                toggle.setBorder(new EmptyBorder(6, 10, 6, 10));
+                toggle.setToolTipText("Click to switch: All → Veg → Non-Veg");
+                toggle.addActionListener(e -> {
+                        if ("All".equalsIgnoreCase(foodTypeFilter)) {
+                                foodTypeFilter = "Veg";
+                        } else if ("Veg".equalsIgnoreCase(foodTypeFilter)) {
+                                foodTypeFilter = "Non-Veg";
+                        } else {
+                                foodTypeFilter = "All";
+                        }
+                        toggle.setText(foodTypeFilter);
+                        toggle.setBackground("Non-Veg".equalsIgnoreCase(foodTypeFilter) ? RED : GREEN);
+                        showFood();
+                });
+                return toggle;
         }
 
         private JTextField createSearchField() {
@@ -829,7 +855,12 @@ public class MenuAndOrderTable extends JFrame {
                 menuHeading.setOpaque(false);
                 menuHeading.setBorder(new EmptyBorder(0, 0, 12, 0));
                 menuHeading.add(heading, BorderLayout.WEST);
-                menuHeading.add(search, BorderLayout.EAST);
+
+                JPanel searchTools = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+                searchTools.setOpaque(false);
+                searchTools.add(search);
+                searchTools.add(createFoodTypeSwitch());
+                menuHeading.add(searchTools, BorderLayout.EAST);
 
                 foodArea = new FoodGrid();
                 JScrollPane scroll = new JScrollPane(foodArea);
@@ -885,18 +916,13 @@ public class MenuAndOrderTable extends JFrame {
 
                         boolean typeOK = true;
 
-                        if (category.equalsIgnoreCase("Veg")) {
+                        if (foodTypeFilter.equalsIgnoreCase("Veg")
+                                        || foodTypeFilter.equalsIgnoreCase("Non-Veg")) {
                                 typeOK = f.foodType != null
-                                                && f.foodType.trim().equalsIgnoreCase("Veg");
-
-                        } else if (category.equalsIgnoreCase("Non-Veg")) {
-                                typeOK = f.foodType != null
-                                                && f.foodType.trim().equalsIgnoreCase("Non-Veg");
+                                                && f.foodType.trim().equalsIgnoreCase(foodTypeFilter);
                         }
 
                         boolean catOK = category.equalsIgnoreCase("All")
-                                        || category.equalsIgnoreCase("Veg")
-                                        || category.equalsIgnoreCase("Non-Veg")
                                         || (f.category != null
                                                         && f.category.equalsIgnoreCase(category));
 
@@ -994,10 +1020,6 @@ public class MenuAndOrderTable extends JFrame {
                 image.setBounds(0, 0, 118, 118);
                 imageBox.add(image);
 
-                FoodTypeSymbol foodTypeSymbol = new FoodTypeSymbol(f.foodType);
-                foodTypeSymbol.setBounds(92, 4, 22, 22);
-                imageBox.add(foodTypeSymbol);
-
                 JPanel info = new JPanel();
 
                 info.setOpaque(false);
@@ -1055,12 +1077,15 @@ public class MenuAndOrderTable extends JFrame {
                 name.setHorizontalAlignment(SwingConstants.LEFT);
                 nameRow.add(name, BorderLayout.CENTER);
 
-                // FoodTypeSymbol foodTypeSymbol = new FoodTypeSymbol(f.foodType);
-                foodTypeSymbol.setPreferredSize(new Dimension(20, 20));
-                foodTypeSymbol.setMinimumSize(new Dimension(20, 20));
-                foodTypeSymbol.setMaximumSize(new Dimension(20, 20));
-
-                nameRow.add(foodTypeSymbol, BorderLayout.EAST);
+                FoodTypeSymbol foodTypeSymbol = new FoodTypeSymbol(f.foodType);
+                foodTypeSymbol.setPreferredSize(new Dimension(18, 18));
+                foodTypeSymbol.setMinimumSize(new Dimension(18, 18));
+                foodTypeSymbol.setMaximumSize(new Dimension(18, 18));
+                JPanel symbolWrap = new JPanel(new GridBagLayout());
+                symbolWrap.setOpaque(false);
+                symbolWrap.setPreferredSize(new Dimension(22, 24));
+                symbolWrap.add(foodTypeSymbol);
+                nameRow.add(symbolWrap, BorderLayout.EAST);
 
                 info.add(nameRow);
 
