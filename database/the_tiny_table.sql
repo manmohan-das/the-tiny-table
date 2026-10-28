@@ -22,7 +22,7 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 --
 
 SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '8384c127-f377-11f0-b6c1-a841f494b21c:1-2328,
-acceae0f-ae63-11f1-b912-cc4740d32571:1-242';
+acceae0f-ae63-11f1-b912-cc4740d32571:1-279';
 
 --
 -- Table structure for table `app_settings`
@@ -95,7 +95,7 @@ CREATE TABLE `food_items` (
   PRIMARY KEY (`food_id`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `food_items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -104,7 +104,7 @@ CREATE TABLE `food_items` (
 
 LOCK TABLES `food_items` WRITE;
 /*!40000 ALTER TABLE `food_items` DISABLE KEYS */;
-INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20,'Veg'),(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15,'Veg'),(3,2,'Chowmin',70.00,'resources/foodImages/chowmein.png',1,20,'Veg'),(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15,'Veg'),(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10,'Veg'),(6,4,'Momos',80.00,'resources/foodImages/momos.png',1,20,'Veg'),(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0,'Veg'),(8,4,'Egg Roll',60.00,'resources/foodImages/eggroll.png',1,15,'Non-Veg'),(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20,'Veg'),(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30,'Veg'),(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20,'Veg');
+INSERT INTO `food_items` VALUES (1,1,'Burger',80.00,'resources/foodImages/burger.png',1,20,'Veg'),(2,1,'Sandwich',60.00,'resources/foodImages/sandwich.png',1,15,'Veg'),(3,2,'Veg chowmin',70.00,'images/1793172623028.png',1,22,'Veg'),(4,2,'Manchurian',90.00,'resources/foodImages/manchurian.png',1,15,'Veg'),(5,3,'Pizza',150.00,'resources/foodImages/pizza.png',1,10,'Veg'),(6,1,'Veg Momos',60.00,'images/1793171738222.png',1,80,'Veg'),(7,4,'Samosa',20.00,'resources/foodImages/samosa.png',0,0,'Veg'),(8,1,'Egg Roll',60.00,'images/1793172694983.png',0,0,'Non-Veg'),(9,4,'French Fries',80.00,'resources/foodImages/french fries.png',1,20,'Veg'),(10,5,'Cold Drink',40.00,'resources/foodImages/cold drink.png',1,30,'Veg'),(11,5,'Cold Coffee',70.00,'resources/foodImages/cold coffee.png',1,20,'Veg'),(14,3,'Margherita',189.00,'images/1793169686201.png',1,16,'Veg'),(15,3,'Chicken pizza',249.00,'images/1793169754247.png',1,18,'Non-Veg'),(16,5,'Bluberry smoothie',219.00,'images/1793169799129.png',1,23,'Veg'),(17,5,'chocolate shake',199.00,'images/1793169849982.png',0,0,'Veg'),(18,5,'Lemon water',129.00,'images/1793172986439.png',0,0,'Veg'),(19,1,'Chicken momo',80.00,'images/1793170031367.png',1,23,'Non-Veg'),(20,4,'Chicken pakora',99.00,'images/1793172659917.png',1,90,'Non-Veg'),(21,2,'Egg chowmein',149.00,'images/1793170162023.png',1,22,'Non-Veg'),(22,3,'Veggie pizza',289.00,'images/1793170213757.png',1,18,'Veg'),(24,2,'White sauce pasta',249.00,'images/1793170335890.png',0,0,'Veg'),(25,6,'Vanilla cake',400.00,'images/1793170398514.png',1,20,'Veg'),(26,4,'Bread pakora',70.00,'images/1793170442110.png',1,46,'Veg'),(27,6,'Chocolate brownie',299.00,'images/1793170708590.png',1,18,'Veg'),(28,6,'Muffins',160.00,'images/1793170776692.png',1,22,'Veg'),(29,5,'Strawberry smoothie',180.00,'images/1793171008971.png',1,22,'Veg'),(30,6,'Gulabjamun',20.00,'images/1793171097622.png',1,80,'Veg'),(31,7,'Chhole bhature',80.00,'images/1793171207910.png',1,60,'Veg'),(32,7,'Poha',80.00,'images/1793172558523.png',1,55,'Veg'),(33,7,'Paneer paratha',90.00,'images/1793171562893.png',1,33,'Veg'),(34,6,'Tiramisu',220.00,'images/1793171631047.png',1,26,'Veg');
 /*!40000 ALTER TABLE `food_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -299,4 +299,4 @@ SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-28 11:43:21
+-- Dump completed on 2026-10-28 13:14:38
