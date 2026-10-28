@@ -1,21 +1,28 @@
-CREATE DATABASE  IF NOT EXISTS `the_tiny_table` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `the_tiny_table`;
--- MySQL dump 10.13  Distrib 8.0.43, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 26.7.0, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: the_tiny_table
+-- Host: localhost    Database: the_tiny_table
 -- ------------------------------------------------------
--- Server version	8.4.7
+-- Server version	26.7.0
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+SET @MYSQLDUMP_TEMP_LOG_BIN = @@SESSION.SQL_LOG_BIN;
+SET @@SESSION.SQL_LOG_BIN= 0;
+
+--
+-- GTID state at the beginning of the backup 
+--
+
+SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '8384c127-f377-11f0-b6c1-a841f494b21c:1-2328,
+acceae0f-ae63-11f1-b912-cc4740d32571:1-242';
 
 --
 -- Table structure for table `app_settings`
@@ -281,6 +288,7 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (1,'Raman','r@man12','admin123','manager',100000.00,1),(2,'Employee1','employee1','123456','employee',70000.00,1),(3,'Amit Kumar','amit','123456','employee',30000.00,1),(4,'Kitchen Staff 1','kitchen1','123456','kitchen_staff',25000.00,1),(5,'Kitchen Staff 2','kitchen2','123456','kitchen_staff',20000.00,1),(9,'Kumkum kumari','kumkum','ku1234','manager',100000.00,1),(11,'Raman','raman','8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92','employee',134543.00,1),(14,'Manmohan','manmohan','123456','manager',100000.00,1),(15,'Milan','milan','8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92','manager',100000.00,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -291,4 +299,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-26 21:36:56
+-- Dump completed on 2026-10-28 11:43:21
